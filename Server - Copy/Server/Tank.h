@@ -5,11 +5,8 @@
 #include "Object.h"
 #include "Tiles.h"
 #include "Map.h"
+#include "Bullet.h"
 
-enum FACING
-{
-	UP = 0, RIGHT = 1, DOWN = 2, LEFT = 3
-};
 class package
 {
 public:
@@ -25,6 +22,9 @@ public:
 class Tank : public Object
 {
 protected:
+	static unsigned int idInit;
+	static const string pathToResource;
+
 	FACING curFacing = UP;
 	float speed = 1.2f;
 	int curSprite = 0;
@@ -34,15 +34,16 @@ protected:
 	Sprite spriteSheet;
 	Tiles spriteSheetInfo;
 	MapElement collisionDetect[3] = { BRICK, STONE, WATER };
+	Bullet* bullet = NULL;
 public:
 	Tank();
-	Tank(string path, int width, int height, float x, float y, FACING direction, int spriteElemNumber);
+	Tank(int width, int height, float x, float y, FACING direction, int spriteElemNumber);
 	~Tank();
 
 	SOCKET sock;
 	SOCKADDR_IN server_address;
 	void UpdateVelocity();
-	void Update(Map mapInfo);
+	void Update(Map* mapInfo);
 	void Render(Camera camera);
 	package *GetPackage();
 	void UsePackage(package *pak);

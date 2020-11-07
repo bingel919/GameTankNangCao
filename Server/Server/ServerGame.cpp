@@ -159,7 +159,9 @@ int ServerRun(Tank &tank)
 			tank.GoRight();
 			lagX += tank.GetVelocity().x * delay*2;
 			break;
-
+		case 'q':
+			tank.Shoot();
+			break;
 		default:
 			printf("unhandled input %c\n", client_input);
 			break;
@@ -226,9 +228,9 @@ SOCKADDR_IN serverAddr, clientAddr;
 int ServerGame::Game_Init()
 {
 	virtualClock.Start();
-	tank = Tank("Resources/Tank/Tank1/Tank1", 13, 13, 0, 0, UP, 8);
+	tank = Tank(13, 13, 0, 0, UP, 8);
 	camera = Camera(GAME_WIDTH);
-	map = Map("Resources/Map/Map", 8, 8, 7);
+	map = Map(8, 8, 7);
 	//socket
 	ServerSetUp();
 	//socket
@@ -262,7 +264,7 @@ void ServerGame::Game_Run()
 	ServerRun(tank);
 
 	Update();
-	tank.Update(map);
+	tank.Update(&map);
 
 	//Render
 	//start render

@@ -76,9 +76,10 @@ ServerGame::~ServerGame()
 int ServerGame::Game_Init()
 {
 	virtualClock.Start();
-	tank = Tank("Resources/Tank/Tank1/Tank1", 13, 13, 0, 0, UP, 8);
+	ListObjectInGame* objList = ListObjectInGame::GetInstance();
+	tank = Tank(13, 13, 0, 0, UP, 8);
 	camera = Camera(GAME_WIDTH);
-	map = Map("Resources/Map/Map", 8, 8, 7);
+	map = Map(8, 8, 7);
 	//socket
 	ClientSetup();
 	tank.sock = sock;
@@ -107,7 +108,7 @@ void ServerGame::Game_Run()
 	tank.UpdateVelocity();
 
 	Update();
-	tank.Update(map);
+	tank.Update(&map);
 
 	//Render
 	//start render

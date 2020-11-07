@@ -6,6 +6,7 @@
 #include "Tiles.h"
 #include "Map.h"
 #include <vector>
+#include "Bullet.h"
 
 struct snapshot
 {
@@ -13,11 +14,7 @@ struct snapshot
 	char input;
 	float x;
 	float y;
-};
-
-enum FACING
-{
-	UP = 0, RIGHT = 1, DOWN = 2, LEFT = 3
+	FACING face;
 };
 class package
 {
@@ -34,6 +31,9 @@ public:
 class Tank : public Object
 {
 protected:
+	static unsigned int idInit;
+	static const string pathToResource;
+
 	FACING curFacing = UP;
 	float speed = 1.2f;
 	int curSprite = 0;
@@ -43,13 +43,14 @@ protected:
 	Sprite spriteSheet;
 	Tiles spriteSheetInfo;
 	MapElement collisionDetect[3] = { BRICK, STONE, WATER };
+	Bullet* bullet = NULL;
 public:
 	Tank();
-	Tank(string path, int width, int height, float x, float y, FACING direction, int spriteElemNumber);
+	Tank(int width, int height, float x, float y, FACING direction, int spriteElemNumber);
 	~Tank();
 
 	void UpdateVelocity();
-	void Update(Map mapInfo);
+	void Update(Map* mapInfo);
 	void Render(Camera camera);
 	package *GetPackage();
 	void UsePackage(package *pak);
@@ -60,6 +61,7 @@ public:
 	void GoDown();
 	void GoLeft();
 	void GoRight();
+	void Shoot();
 	vector<snapshot> history;
 	void CalculateSnapshot(char input, int timestamp, int position);
 	void SaveSnapShot(char input, int timestamp);

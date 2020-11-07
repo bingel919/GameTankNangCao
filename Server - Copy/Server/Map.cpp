@@ -1,19 +1,19 @@
 #include "Map.h"
 
-
+const string Map::pathToResource = "Resources/Map/Map";
 
 Map::Map()
 {
 }
 
-Map::Map(string path, int width, int height, int spriteElemNumber)
+Map::Map(int width, int height, int spriteElemNumber)
 {
-	spriteSheet = Sprite(path + ".png");
-	spriteSheetInfo = Tiles(path + ".xml", spriteElemNumber);
+	spriteSheet = Sprite(pathToResource + ".png");
+	spriteSheetInfo = Tiles(pathToResource + ".xml", spriteElemNumber);
 	elemWidth = width;
 	elemHeight = height;
 	ifstream map;
-	map.open(path + ".txt");
+	map.open(pathToResource + ".txt");
 	for (int i = 27; i > -1; i--)
 		for (int j = 0; j < 28; j++)
 			map >> block[i][j];
@@ -68,12 +68,33 @@ void Map::CollisionDetect(Object * objInfo, MapElement elemCollisionDetect[], in
 					float collisionTime = SweptAABB(objInfo->objInfo, elemBox, normalX, normalY);
 					if (collisionTime < 0.0f)
 						collisionTime = 0;
-					if (collisionTime < objInfo->collisionTime && (normalX != 0 || normalY != 0))
+					switch (objInfo->objType)
 					{
-						objInfo->collisionTime = collisionTime;
-						objInfo->normalX = normalX;
-						objInfo->normalY = normalY;
+					case TankObj:
+#pragma region Tank Collide Detected
+						if (collisionTime < objInfo->collisionTime && (normalX != 0 || normalY != 0))
+						{
+							objInfo->collisionTime = collisionTime;
+							objInfo->normalX = normalX;
+							objInfo->normalY = normalY;
+						}
+#pragma endregion
+						break;
+					case BulletObj:
+#pragma region Bullet Collide Detected
+						if (collisionTime < 1 && (normalX != 0 || normalY != 0))
+						{
+							if (block[i][j] == BRICK) 
+								block[i][j] = NONE;
+							objInfo->isDestroy = true;
+							objInfo->collisionTime = collisionTime;
+						}
+#pragma endregion
+						break;
+					default:
+						break;
 					}
+					
 
 					break;
 				}
@@ -85,3 +106,4 @@ void Map::CollisionDetect(Object * objInfo, MapElement elemCollisionDetect[], in
 Map::~Map()
 {
 }
+

@@ -4,19 +4,27 @@
 #include <ctime> 
 #include <string>
 
+
+unsigned int Tank::idInit = 0;
+const string Tank::pathToResource = "Resources/Tank/Tank1/Tank1";
+
 Tank::Tank()
 {
+	objType = TankObj;
 }
 
-Tank::Tank(string path, int width, int height, float x, float y, FACING direction, int spriteElemNumber)
+Tank::Tank(int width, int height, float x, float y, FACING direction, int spriteElemNumber)
 {
-	spriteSheet = Sprite(path + ".png");
-	spriteSheetInfo = Tiles(path + ".xml", spriteElemNumber);
+	id = idInit;
+	idInit = (idInit + 1) % TANK_MAX_RANGE;
+	spriteSheet = Sprite(pathToResource + ".png");
+	spriteSheetInfo = Tiles(pathToResource + ".xml", spriteElemNumber);
 	objInfo.botLeftPosition = D3DXVECTOR2(x, y);
 	objInfo.direction = D3DXVECTOR2(1, 1);
 	objInfo.center = D3DXVECTOR2(width / 2.0f, height / 2.0f);
 	objInfo.width = width;
 	objInfo.height = height;
+	objType = TankObj;
 
 	startingFrame = direction * 2;
 	curFacing = direction;
@@ -32,12 +40,14 @@ void Tank::UpdateVelocity()
 {
 	rev = ReceivPack();
 	objInfo.velocity = D3DXVECTOR2(0, 0);
+	FACING prevFace = curFacing;
 	if (Key_Down(DIK_UP))
 	{
 		//objInfo.botLeftPosition.y += speed * collisionTime;
 		//if (!rev)
 		objInfo.velocity.y = speed;
 		objInfo.direction.y = 1;
+		objInfo.direction.x = 0;
 		curFacing = UP;
 		SendPack('w');
 	}
@@ -47,6 +57,7 @@ void Tank::UpdateVelocity()
 		//if (!rev)
 		objInfo.velocity.y = -speed;
 		objInfo.direction.y = -1;
+		objInfo.direction.x = 0;
 		curFacing = DOWN;
 		SendPack('s');
 	}
@@ -56,6 +67,7 @@ void Tank::UpdateVelocity()
 		//if (!rev)
 		objInfo.velocity.x = -speed;
 		objInfo.direction.x = -1;
+		objInfo.direction.y = 0;
 		curFacing = LEFT;
 		SendPack('a');
 	}
@@ -65,18 +77,30 @@ void Tank::UpdateVelocity()
 		//if (!rev)
 		objInfo.velocity.x = speed;
 		objInfo.direction.x = 1;
+		objInfo.direction.y = 0;
 		curFacing = RIGHT;
 		SendPack('d');
 	}
+
+	if (Key_Down(DIK_SPACE) && bullet == NULL)
+	{
+		D3DXVECTOR2 firingPos = objInfo.GetCenterPos();
+		//firingPos += objInfo.direction * (objInfo.width / 2 - 7);
+		bullet = new Bullet(firingPos.x, firingPos.y, curFacing);
+		SendPack('q');
+	}
+	if (prevFace != curFacing)
+		countDownFrameDelay = 0;
+
 
 	if (objInfo.velocity != D3DXVECTOR2(0, 0))
 		UpdateAnimation();
 
 }
 
-void Tank::Update(Map mapInfo)
+void Tank::Update(Map* mapInfo)
 {
-	mapInfo.CollisionDetect(this, collisionDetect, 3);
+	mapInfo->CollisionDetect(this, collisionDetect, 3);
 	if (abs(normalX) > 0.0001f)
 		objInfo.velocity.x = 0;
 	if (abs(normalY) > 0.0001f)
@@ -86,6 +110,16 @@ void Tank::Update(Map mapInfo)
 
 	collisionTime = 1;
 	normalX = normalY = 0;
+
+	if (bullet != NULL)
+	{
+		bullet->UpdateBullet(mapInfo);
+		if (bullet->isDestroy)
+		{
+			delete bullet;
+			bullet = NULL;
+		}
+	}
 
 	//ReceivPack();
 }
@@ -97,6 +131,10 @@ void Tank::Render(Camera camera)
 	rect.right = spriteSheet.GetWidth();
 	rect.left = rect.top = 0;
 	spriteSheet.Render(camera, spriteSheetInfo.getRectLocation(curSprite), objInfo, 1);
+
+	if (bullet != NULL)
+		bullet->Render(camera);
+
 }
 
 package* Tank::GetPackage()

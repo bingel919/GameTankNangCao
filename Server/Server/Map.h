@@ -24,6 +24,7 @@ enum MapElement
 class Map
 {
 protected:
+	static const string pathToResource;
 	Sprite spriteSheet;
 	Tiles spriteSheetInfo;
 	int block[MAP_Y_HEIGHT][MAP_X_WIDTH];
@@ -31,12 +32,14 @@ protected:
 
 public:
 	Map();
-	Map(string path, int width, int height, int spriteElemNumber);
+	Map(int width, int height, int spriteElemNumber);
 
 
 
 	void Render(Camera camera);
 	void CollisionDetect(Object * objInfo, MapElement elemCollisionDetect[], int size);
+	
 	~Map();
+
 };
 
