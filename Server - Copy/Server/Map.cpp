@@ -8,6 +8,7 @@ Map::Map()
 
 Map::Map(int width, int height, int spriteElemNumber)
 {
+	this;
 	spriteSheet = Sprite(pathToResource + ".png");
 	spriteSheetInfo = Tiles(pathToResource + ".xml", spriteElemNumber);
 	elemWidth = width;
@@ -84,8 +85,9 @@ void Map::CollisionDetect(Object * objInfo, MapElement elemCollisionDetect[], in
 #pragma region Bullet Collide Detected
 						if (collisionTime < 1 && (normalX != 0 || normalY != 0))
 						{
-							if (block[i][j] == BRICK) 
-								block[i][j] = NONE;
+							this;
+							//if (block[i][j] == BRICK)
+								//DestroyBlock(i, j);
 							objInfo->isDestroy = true;
 							objInfo->collisionTime = collisionTime;
 						}

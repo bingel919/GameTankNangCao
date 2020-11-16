@@ -82,13 +82,13 @@ int ServerSetUp()
 	previousTime = timenow;
 	return 0;
 }
+SOCKADDR_IN from;
 int ServerRun(Tank &tank)
 {
 	const int SOCKET_BUFFER_SIZE = 32;
 	__int8 buffer[SOCKET_BUFFER_SIZE];
 	// get input packet from player
 	int flags = 0;
-	SOCKADDR_IN from;
 	int from_size = sizeof(from);
 	int bytes_received = recvfrom(sock, buffer, SOCKET_BUFFER_SIZE, flags, (SOCKADDR*)&from, &from_size);
 
@@ -192,23 +192,13 @@ int ServerRun(Tank &tank)
 		memcpy(&buffer2[write_index], &player_y, sizeof(player_y));
 		write_index += sizeof(player_y);
 
-		//memcpy(&buffer[write_index], &is_running, sizeof(is_running));
+		bool POS = true;
 
-		// grab data from packet
-		/*__int32 player_x2;
-		__int32 player_y2;
-		__int32 read_index = 0;
+		memcpy(&buffer2[write_index], &POS, sizeof(POS));
+		write_index += sizeof(POS);
 
-		memcpy(&player_x2, &buffer2[read_index], sizeof(player_x2));
-		read_index += sizeof(player_x2);
-
-		memcpy(&player_y2, &buffer2[read_index], sizeof(player_y2));
-		read_index += sizeof(player_y2);
-		//objInfo.botLeftPosition.x = player_x;
-		//objInfo.botLeftPosition.y = player_y;*/
-
-		// send back to client
-		int buffer_length = sizeof(player_x) + sizeof(player_y);
+		//send back to client
+		int buffer_length = sizeof(player_x) + sizeof(player_y) + sizeof(POS);
 		if (sendto(sock, buffer2, buffer_length, flags, to, to_length) == SOCKET_ERROR)
 		{
 			printf("sendto failed: %d", WSAGetLastError());
@@ -217,8 +207,43 @@ int ServerRun(Tank &tank)
 		}
 		else
 			auto err = "a";
+		return 0;
 }
 
+void ServerGame::SendBrickStatus(int i, int j)
+{
+
+	int flags = 0;
+	SOCKADDR* to = (SOCKADDR*)&from;
+	auto to_length = sizeof(from);
+
+	const int SOCKET_BUFFER_SIZE = 32;
+	__int8 buffer2[SOCKET_BUFFER_SIZE];
+	// create state packet
+	__int32 write_index = 0;
+
+	memcpy(&buffer2[write_index], &i, sizeof(i));
+	write_index += sizeof(i);
+
+	memcpy(&buffer2[write_index], &j, sizeof(j));
+	write_index += sizeof(j);
+	
+	bool POS = false;
+	memcpy(&buffer2[write_index], &POS, sizeof(POS));
+	write_index += sizeof(POS);
+	
+
+	// send back to client
+	int buffer_length = sizeof(i) + sizeof(j) + sizeof(POS);
+	if (sendto(sock, buffer2, buffer_length, flags, to, to_length) == SOCKET_ERROR)
+	{
+		printf("sendto failed: %d", WSAGetLastError());
+		auto err = WSAGetLastError();
+		err = err;
+	}
+	else
+		auto err = "a";
+}
 
 ServerGame::~ServerGame()
 {

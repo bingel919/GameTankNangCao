@@ -38,7 +38,13 @@ public:
 
 	void Render(Camera camera);
 	void CollisionDetect(Object * objInfo, MapElement elemCollisionDetect[], int size);
-	
+	void DestroyBlock(int i, int j)
+	{
+		this;
+		if (block[i][j] == BRICK)
+			block[i][j] = NONE;
+	}
+
 	~Map();
 
 };

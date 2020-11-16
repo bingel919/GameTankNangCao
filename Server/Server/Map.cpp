@@ -1,4 +1,5 @@
 #include "Map.h"
+#include "ServerGame.h"
 
 const string Map::pathToResource = "Resources/Map/Map";
 
@@ -86,7 +87,10 @@ void Map::CollisionDetect(Object * objInfo, MapElement elemCollisionDetect[], in
 						{
 							if (block[i][j] == BRICK) 
 								block[i][j] = NONE;
-							objInfo->isDestroy = true;
+							{
+								objInfo->isDestroy = true;
+								ServerGame::SendBrickStatus(i, j);
+							}
 							objInfo->collisionTime = collisionTime;
 						}
 #pragma endregion

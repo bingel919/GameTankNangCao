@@ -33,13 +33,13 @@ protected:
 	Map map;
 public:
 	VClock virtualClock;
-
 	ServerGame();
 	~ServerGame();
 
 	int Game_Init();
 	void Game_Run();
 	void Game_End();
+	static void SendBrickStatus(int i, int j);
 
 	void Update();
 

@@ -7,7 +7,7 @@
 
 #define APPTITLE "Client"
 
-ServerGame* Game = new ServerGame();
+ServerGame* Game = ServerGame::GetInstace();
 
 LRESULT WINAPI WinProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {

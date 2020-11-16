@@ -3,6 +3,7 @@
 #include <chrono>
 #include <ctime> 
 #include <string>
+#include "ServerGame.h"
 
 
 unsigned int Tank::idInit = 0;
@@ -189,7 +190,7 @@ int Tank::SendPack(char command)
 
 int Tank::ReceivPack()
 {
-	const int SOCKET_BUFFER_SIZE = 8;
+	const int SOCKET_BUFFER_SIZE = 12;
 	__int8 buffer[SOCKET_BUFFER_SIZE];
 
 	int flags = 0;
@@ -220,8 +221,18 @@ int Tank::ReceivPack()
 		read_index += sizeof(player_x);
 
 		memcpy(&player_y, &buffer[read_index], sizeof(player_y));
-		objInfo.botLeftPosition.x = player_x;
-		objInfo.botLeftPosition.y = player_y;
+		read_index += sizeof(player_y);
+		bool POS;
+		memcpy(&POS, &buffer[read_index], sizeof(POS));
+		if (POS == true)
+		{
+			objInfo.botLeftPosition.x = player_x;
+			objInfo.botLeftPosition.y = player_y;
+		}
+		else
+		{
+			ServerGame::DestroyBlock(player_x, player_y);
+		}
 		return 1;
 	}
 }

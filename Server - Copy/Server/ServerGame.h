@@ -23,6 +23,7 @@ const int MAX_PLAYER = 1;
 class ServerGame
 {
 protected:
+	static ServerGame *instance;
 	static unsigned int client_id;
 
 	LARGE_INTEGER clock_frequency;
@@ -36,10 +37,26 @@ public:
 
 	ServerGame();
 	~ServerGame();
-
+	Map* GetMap()
+	{
+		return &map;
+	}
 	int Game_Init();
 	void Game_Run();
 	void Game_End();
+	static void DestroyBlock(int i, int j)
+	{
+		
+		instance->GetMap()->DestroyBlock(i, j);
+	}
+	static ServerGame* GetInstace()
+	{
+		if (!instance)
+		{
+			instance = new ServerGame();
+		}
+		return instance;
+	}
 
 	void Update();
 

@@ -2,7 +2,7 @@
 
 //id's to assign clients for our table
 unsigned int ServerGame::client_id = 0;
-
+ServerGame* ServerGame::instance = NULL;
 void NaiveSend(int inSocket, const package* inTank)
 {
 	send(inSocket,
