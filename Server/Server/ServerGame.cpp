@@ -4,11 +4,66 @@
 #include <chrono>
 #include <ctime> 
 #include <string>
+#include <windows.h>
+#include <stdio.h>
+#include <fcntl.h>
+#include <io.h>
+#include <fstream>
+#ifndef _USE_OLD_IOSTREAMS
+using namespace std;
+#endif
+// maximum mumber of lines the output console should have
+static const WORD MAX_CONSOLE_LINES = 500;
+#ifdef _DEBUG
 
+void RedirectIOToConsole()
+{
+	int hConHandle;
+	long lStdHandle;
+	CONSOLE_SCREEN_BUFFER_INFO coninfo;
+	FILE *fp;
+
+	// allocate a console for this app
+	AllocConsole();
+
+	// set the screen buffer to be big enough to let us scroll text
+	GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &coninfo);
+	coninfo.dwSize.Y = MAX_CONSOLE_LINES;
+	SetConsoleScreenBufferSize(GetStdHandle(STD_OUTPUT_HANDLE), coninfo.dwSize);
+
+	// redirect unbuffered STDOUT to the console
+	lStdHandle = (long)GetStdHandle(STD_OUTPUT_HANDLE);
+	hConHandle = _open_osfhandle(lStdHandle, _O_TEXT);
+	fp = _fdopen(hConHandle, "w");
+	*stdout = *fp;
+	setvbuf(stdout, NULL, _IONBF, 0);
+
+	// redirect unbuffered STDIN to the console
+	lStdHandle = (long)GetStdHandle(STD_INPUT_HANDLE);
+	hConHandle = _open_osfhandle(lStdHandle, _O_TEXT);
+	fp = _fdopen(hConHandle, "r");
+	*stdin = *fp;
+	setvbuf(stdin, NULL, _IONBF, 0);
+
+	// redirect unbuffered STDERR to the console
+	lStdHandle = (long)GetStdHandle(STD_ERROR_HANDLE);
+	hConHandle = _open_osfhandle(lStdHandle, _O_TEXT);
+	fp = _fdopen(hConHandle, "w");
+	*stderr = *fp;
+	setvbuf(stderr, NULL, _IONBF, 0);
+
+	// make cout, wcout, cin, wcin, wcerr, cerr, wclog and clog
+	// point to console as well
+	ios::sync_with_stdio();
+}
+
+#endif
+//End of File
 //id's to assign clients for our table
 unsigned int ServerGame::client_id = 0;
 int previousTime;
-
+bool client1 = false;
+bool client2 = false;
 bool SetSocketBlockingEnabled(int fd, bool blocking)
 {
 	if (fd < 0) return false;
@@ -82,18 +137,67 @@ int ServerSetUp()
 	previousTime = timenow;
 	return 0;
 }
+SOCKADDR_IN nullsock;
 SOCKADDR_IN from;
+SOCKADDR_IN from1;
+SOCKADDR_IN from2;
+int lagX = 0;
+int lagY = 0;
+int previousX = 0;
+int previousY = 0;
+void SendBack(Tank tank, SOCKADDR_IN from)
+{
+	const int SOCKET_BUFFER_SIZE = 8000;
+	int flags = 0;
+	SOCKADDR* to = (SOCKADDR*)&from;
+	int to_length = sizeof(from);
+	__int8 buffer2[SOCKET_BUFFER_SIZE];
+	if (tank.GetX() == previousX)
+		lagX = 0;
+	if (tank.GetY() == previousY)
+		lagY = 0;
+	__int32 player_x = tank.GetX() + lagX;
+	__int32 player_y = tank.GetY() + lagY;
+
+	// create state packet
+	__int32 write_index = 0;
+	memcpy(&buffer2[write_index], &player_x, sizeof(player_x));
+	write_index += sizeof(player_x);
+
+	memcpy(&buffer2[write_index], &player_y, sizeof(player_y));
+	write_index += sizeof(player_y);
+
+	bool POS = true;
+
+	memcpy(&buffer2[write_index], &POS, sizeof(POS));
+	write_index += sizeof(POS);
+
+	//send back to client
+	int buffer_length = sizeof(player_x) + sizeof(player_y) + sizeof(POS);
+	if (sendto(sock, buffer2, buffer_length, flags, to, to_length) == SOCKET_ERROR)
+	{
+		printf("sendto failed: %d", WSAGetLastError());
+		auto err = WSAGetLastError();
+	}
+	else
+	{
+		char debug[50] = "Send back package";
+		OutputDebugString(debug);
+		auto err = "a";
+	}
+	auto end = std::chrono::system_clock::now();
+	std::time_t end_time = std::chrono::system_clock::to_time_t(end);
+	auto timenow = static_cast<int>(end_time);
+}
 int ServerRun(Tank &tank)
 {
-	const int SOCKET_BUFFER_SIZE = 32;
+	const int SOCKET_BUFFER_SIZE = 8000;
 	__int8 buffer[SOCKET_BUFFER_SIZE];
 	// get input packet from player
 	int flags = 0;
 	int from_size = sizeof(from);
 	int bytes_received = recvfrom(sock, buffer, SOCKET_BUFFER_SIZE, flags, (SOCKADDR*)&from, &from_size);
 
-	int lagX = 0;
-	int lagY = 0;
 
 	if (bytes_received == SOCKET_ERROR)
 	{
@@ -103,7 +207,19 @@ int ServerRun(Tank &tank)
 	}
 	else
 	{
-
+		if (!client1)
+		{
+			from1 = from;
+			client1 = true;
+		}
+		else
+		{
+			if (!client2 && from1.sin_addr.s_addr != from.sin_addr.s_addr)
+			{
+				from2 = from;
+				client2 = true;
+			}
+		}
 		// process input
 		char client_input = buffer[0];
 		int delay = 0;
@@ -120,6 +236,8 @@ int ServerRun(Tank &tank)
 		auto end = std::chrono::system_clock::now();
 		std::time_t end_time = std::chrono::system_clock::to_time_t(end);
 		auto timenow = static_cast<int>(end_time);
+		char debug[50] = "Receive package";
+		OutputDebugString(debug);
 		//auto shorttime = timenow % 10000;
 		timeint = timenow - timenow % 10000 + timeint;
 		delay = timenow - timeint;
@@ -142,72 +260,36 @@ int ServerRun(Tank &tank)
 		{
 		case 'w':
 			tank.GoUp();
-			lagY += tank.GetVelocity().y * delay*2;
+			lagY = tank.GetSpeed()*delay;
 			break;
 
 		case 'a':
 			tank.GoLeft();
-			lagX -= tank.GetVelocity().x * delay*2;
+			lagX = -tank.GetSpeed()*delay;
+			//SendBack(tank, from);
 			break;
 
 		case 's':
 			tank.GoDown();
-			lagY -= tank.GetVelocity().y * delay*2;
+			lagY = -tank.GetSpeed()*delay;
+			//SendBack(tank, from);
 			break;
 
 		case 'd':
 			tank.GoRight();
-			lagX += tank.GetVelocity().x * delay*2;
+			lagX = tank.GetSpeed()*delay;
+			//SendBack(tank, from);
 			break;
 		case 'q':
 			tank.Shoot();
+			//SendBack(tank, from);
 			break;
 		default:
 			printf("unhandled input %c\n", client_input);
 			break;
 		}
-
-	
 	}
-	
-	auto end = std::chrono::system_clock::now();
-	std::time_t end_time = std::chrono::system_clock::to_time_t(end);
-	auto timenow = static_cast<int>(end_time);
-	
-	auto waittime = timenow - previousTime;
-		previousTime = timenow;
-		flags = 0;
-		SOCKADDR* to = (SOCKADDR*)&from;
-		int to_length = sizeof(from);
-		__int8 buffer2[SOCKET_BUFFER_SIZE];
-
-		__int32 player_x = tank.GetX() + lagX;
-		__int32 player_y = tank.GetY() + lagY;
-
-		// create state packet
-		__int32 write_index = 0;
-		memcpy(&buffer2[write_index], &player_x, sizeof(player_x));
-		write_index += sizeof(player_x);
-
-		memcpy(&buffer2[write_index], &player_y, sizeof(player_y));
-		write_index += sizeof(player_y);
-
-		bool POS = true;
-
-		memcpy(&buffer2[write_index], &POS, sizeof(POS));
-		write_index += sizeof(POS);
-
-		//send back to client
-		int buffer_length = sizeof(player_x) + sizeof(player_y) + sizeof(POS);
-		if (sendto(sock, buffer2, buffer_length, flags, to, to_length) == SOCKET_ERROR)
-		{
-			printf("sendto failed: %d", WSAGetLastError());
-			auto err = WSAGetLastError();
-			return 1;
-		}
-		else
-			auto err = "a";
-		return 0;
+	return 0;
 }
 
 void ServerGame::SendBrickStatus(int i, int j)
@@ -217,7 +299,7 @@ void ServerGame::SendBrickStatus(int i, int j)
 	SOCKADDR* to = (SOCKADDR*)&from;
 	auto to_length = sizeof(from);
 
-	const int SOCKET_BUFFER_SIZE = 32;
+	const int SOCKET_BUFFER_SIZE = 8000;
 	__int8 buffer2[SOCKET_BUFFER_SIZE];
 	// create state packet
 	__int32 write_index = 0;
@@ -287,6 +369,10 @@ void ServerGame::Game_Run()
 
 	//socket
 	ServerRun(tank);
+	if (client1)
+		SendBack(tank, from1);
+	if (client2)
+		SendBack(tank, from2);
 
 	Update();
 	tank.Update(&map);

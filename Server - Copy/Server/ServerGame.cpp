@@ -84,6 +84,7 @@ int ServerGame::Game_Init()
 	ClientSetup();
 	tank.sock = sock;
 	tank.server_address = server_address;
+	tank.SendPack('0');
 	//socket
 	return 1;
 }

@@ -62,6 +62,10 @@ public:
 	void GoLeft();
 	void GoRight();
 	void Shoot();
+	float GetSpeed()
+	{
+		return speed;
+	}
 	vector<snapshot> history;
 	void CalculateSnapshot(char input, int timestamp, int position);
 	void SaveSnapShot(char input, int timestamp);

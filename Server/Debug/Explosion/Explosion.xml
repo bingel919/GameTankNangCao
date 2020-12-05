@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with TexturePacker https://www.codeandweb.com/texturepacker -->
+<!-- $TexturePacker:SmartUpdate:bff6be570869a537e37b0375ec4f080f:8606d2cb559baa7096ab36632b34b5d4:e47e7b2d1307a8670f7923f3508fe820$ -->
+<!--Format:
+n  => name of the sprite
+x  => sprite x pos in texture
+y  => sprite y pos in texture
+w  => sprite width (may be trimmed)
+h  => sprite height (may be trimmed)
+pX => x pos of the pivot point (relative to sprite width)
+pY => y pos of the pivot point (relative to sprite height)
+oX => sprite's x-corner offset (only available if trimmed)
+oY => sprite's y-corner offset (only available if trimmed)
+oW => sprite's original width (only available if trimmed)
+oH => sprite's original height (only available if trimmed)
+r => 'y' only set if sprite is rotated
+with polygon mode enabled:
+vertices   => points in sprite coordinate system (x0,y0,x1,y1,x2,y2, ...)
+verticesUV => points in sheet coordinate system (x0,y0,x1,y1,x2,y2, ...)
+triangles  => sprite triangulation, 3 vertex indices per triangle
+-->
+<TextureAtlas imagePath="Explosion.png" width="47" height="18">
+    <sprite n="Untitled-1_51.png" x="35" y="1" w="11" h="11"/>
+    <sprite n="Untitled-1_52.png" x="19" y="1" w="14" h="14"/>
+    <sprite n="Untitled-1_53.png" x="1" y="1" w="16" h="16"/>
+</TextureAtlas>

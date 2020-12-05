@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with TexturePacker https://www.codeandweb.com/texturepacker -->
+<!-- $TexturePacker:SmartUpdate:411732d8cc76308661d10a4d7d942f7c:e2f53f2c89f94d4e4734baac1494dc7d:f6f2fbbbccc4c55a0931359f35151a5f$ -->
+<!--Format:
+n  => name of the sprite
+x  => sprite x pos in texture
+y  => sprite y pos in texture
+w  => sprite width (may be trimmed)
+h  => sprite height (may be trimmed)
+pX => x pos of the pivot point (relative to sprite width)
+pY => y pos of the pivot point (relative to sprite height)
+oX => sprite's x-corner offset (only available if trimmed)
+oY => sprite's y-corner offset (only available if trimmed)
+oW => sprite's original width (only available if trimmed)
+oH => sprite's original height (only available if trimmed)
+r => 'y' only set if sprite is rotated
+with polygon mode enabled:
+vertices   => points in sprite coordinate system (x0,y0,x1,y1,x2,y2, ...)
+verticesUV => points in sheet coordinate system (x0,y0,x1,y1,x2,y2, ...)
+triangles  => sprite triangulation, 3 vertex indices per triangle
+-->
+<TextureAtlas imagePath="Map.png" width="28" height="30">
+    <sprite n="Untitled-1_102.png" x="1" y="1" w="8" h="8"/>
+    <sprite n="Untitled-1_103.png" x="1" y="11" w="8" h="8"/>
+    <sprite n="Untitled-1_104.png" x="1" y="21" w="8" h="8"/>
+    <sprite n="Untitled-1_105.png" x="11" y="1" w="8" h="8"/>
+    <sprite n="Untitled-1_106.png" x="11" y="11" w="8" h="8"/>
+    <sprite n="Untitled-1_107.png" x="20" y="21" w="7" h="7"/>
+    <sprite n="Untitled-1_108.png" x="11" y="21" w="7" h="8"/>
+</TextureAtlas>

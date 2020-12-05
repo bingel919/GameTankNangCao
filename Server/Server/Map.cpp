@@ -66,7 +66,7 @@ void Map::CollisionDetect(Object * objInfo, MapElement elemCollisionDetect[], in
 					elemBox.velocity = D3DXVECTOR2(0, 0);
 					elemBox.botLeftPosition = D3DXVECTOR2((j - 1) * elemWidth, (i - 1) * elemHeight);
 					float normalX, normalY;
-					float collisionTime = SweptAABB(objInfo->objInfo, elemBox, normalX, normalY);
+  					float collisionTime = SweptAABB(objInfo->objInfo, elemBox, normalX, normalY);
 					if (collisionTime < 0.0f)
 						collisionTime = 0;
 					switch (objInfo->objType)

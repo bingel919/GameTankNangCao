@@ -37,9 +37,10 @@ Tank::~Tank()
 }
 
 bool rev = false;
+int previousTime = 0;
 void Tank::UpdateVelocity()
 {
-	rev = ReceivPack();
+	bool sentPack = false;
 	objInfo.velocity = D3DXVECTOR2(0, 0);
 	FACING prevFace = curFacing;
 	if (Key_Down(DIK_UP))
@@ -51,16 +52,18 @@ void Tank::UpdateVelocity()
 		objInfo.direction.x = 0;
 		curFacing = UP;
 		SendPack('w');
+		sentPack = true;
 	}
 	else if (Key_Down(DIK_DOWN))
 	{
-		//objInfo.botLeftPosition.y -= speed * collisionTime;
+	//	objInfo.botLeftPosition.y -= speed * collisionTime;
 		//if (!rev)
 		objInfo.velocity.y = -speed;
 		objInfo.direction.y = -1;
 		objInfo.direction.x = 0;
 		curFacing = DOWN;
 		SendPack('s');
+		sentPack = true;
 	}
 	else if (Key_Down(DIK_LEFT))
 	{
@@ -71,16 +74,18 @@ void Tank::UpdateVelocity()
 		objInfo.direction.y = 0;
 		curFacing = LEFT;
 		SendPack('a');
+		sentPack = true;
 	}
 	else if (Key_Down(DIK_RIGHT))
 	{
-		//objInfo.botLeftPosition.x += speed * collisionTime;
+	//	objInfo.botLeftPosition.x += speed * collisionTime;
 		//if (!rev)
 		objInfo.velocity.x = speed;
 		objInfo.direction.x = 1;
 		objInfo.direction.y = 0;
 		curFacing = RIGHT;
 		SendPack('d');
+		sentPack = true;
 	}
 
 	if (Key_Down(DIK_SPACE) && bullet == NULL)
@@ -89,6 +94,7 @@ void Tank::UpdateVelocity()
 		//firingPos += objInfo.direction * (objInfo.width / 2 - 7);
 		bullet = new Bullet(firingPos.x, firingPos.y, curFacing);
 		SendPack('q');
+		sentPack = true;
 	}
 	if (prevFace != curFacing)
 		countDownFrameDelay = 0;
@@ -98,7 +104,6 @@ void Tank::UpdateVelocity()
 		UpdateAnimation();
 
 }
-
 void Tank::Update(Map* mapInfo)
 {
 	mapInfo->CollisionDetect(this, collisionDetect, 3);
@@ -107,7 +112,7 @@ void Tank::Update(Map* mapInfo)
 	if (abs(normalY) > 0.0001f)
 		objInfo.velocity.y = 0;
 	//if (!rev)
-	//objInfo.botLeftPosition += objInfo.velocity *collisionTime;
+	objInfo.botLeftPosition += objInfo.velocity *collisionTime;
 
 	collisionTime = 1;
 	normalX = normalY = 0;
@@ -121,8 +126,7 @@ void Tank::Update(Map* mapInfo)
 			bullet = NULL;
 		}
 	}
-
-	//ReceivPack();
+	ReceivPack();
 }
 
 void Tank::Render(Camera camera)
@@ -152,7 +156,7 @@ void Tank::UsePackage(package * pak)
 
 int Tank::SendPack(char command)
 {
-	const int SOCKET_BUFFER_SIZE = 32;
+	const int SOCKET_BUFFER_SIZE = 8000;
 	__int8 buffer[SOCKET_BUFFER_SIZE];
 	__int32 player_x;
 	__int32 player_y;
@@ -190,7 +194,7 @@ int Tank::SendPack(char command)
 
 int Tank::ReceivPack()
 {
-	const int SOCKET_BUFFER_SIZE = 12;
+	const int SOCKET_BUFFER_SIZE = 8000;
 	__int8 buffer[SOCKET_BUFFER_SIZE];
 
 	int flags = 0;
@@ -226,8 +230,18 @@ int Tank::ReceivPack()
 		memcpy(&POS, &buffer[read_index], sizeof(POS));
 		if (POS == true)
 		{
-			objInfo.botLeftPosition.x = player_x;
-			objInfo.botLeftPosition.y = player_y;
+			//auto end = std::chrono::system_clock::now();
+			//std::time_t end_time = std::chrono::system_clock::to_time_t(end);
+			//auto timenow = static_cast<int>(end_time);
+			//
+			
+			if (abs(objInfo.botLeftPosition.x - player_x) >= 20 && abs(objInfo.botLeftPosition.y - player_y) >= 20)
+			{
+				objInfo.botLeftPosition.x = player_x;
+				objInfo.botLeftPosition.y = player_y;
+			}
+			//
+			
 		}
 		else
 		{
