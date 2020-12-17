@@ -13,6 +13,7 @@ protected:
 	static unsigned int idInit;
 	float speed = 3.0f;
 	int curSprite = 0;
+	int idTank;
 public:
 	Sprite spriteSheet;
 	Tiles spriteSheetInfo;
@@ -21,7 +22,7 @@ public:
 	void UpdateBullet(Map* mapInfo);
 
 	Bullet();
-	Bullet(float x, float y, FACING direction);
+	Bullet(int inIdTank, float x, float y, FACING direction);
 	void Render(Camera camera);
 	~Bullet();
 };

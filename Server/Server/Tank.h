@@ -1,5 +1,7 @@
 #pragma once
 
+class Tank;
+
 #include <d3dx9.h>
 #include "Sprite.h"
 #include "Object.h"
@@ -49,8 +51,8 @@ public:
 	Tank(int width, int height, float x, float y, FACING direction, int spriteElemNumber);
 	~Tank();
 
-	void UpdateVelocity();
-	void Update(Map* mapInfo);
+	void UpdateInput();
+	void Update(Map* mapInfo, Tank* tanks, int numberOfTanks);
 	void Render(Camera camera);
 	package *GetPackage();
 	void UsePackage(package *pak);
@@ -62,6 +64,10 @@ public:
 	void GoLeft();
 	void GoRight();
 	void Shoot();
+	int GetID()
+	{
+		return id;
+	}
 	float GetSpeed()
 	{
 		return speed;
@@ -69,8 +75,9 @@ public:
 	vector<snapshot> history;
 	void CalculateSnapshot(char input, int timestamp, int position);
 	void SaveSnapShot(char input, int timestamp);
-
+	void UpdateVelocity();
 
 private:
 	void UpdateAnimation();
+	void TankCollideDetect(Tank* tanks, int numberOfTanks);
 };	

@@ -4,7 +4,7 @@
 
 
 unsigned int Tank::idInit = 0;
-const string Tank::pathToResource = "Resources/Tank/Tank1/Tank1";
+const string Tank::pathToResource = "Resources/Tank";
 
 Tank::Tank()
 {
@@ -14,10 +14,11 @@ Tank::Tank()
 Tank::Tank(int width, int height, float x, float y, FACING direction, int spriteElemNumber)
 {
 	id = idInit;
+	string tankName = "//Tank" + to_string(id + 1);
 	idInit = (idInit + 1) % TANK_MAX_RANGE;
-	spriteSheet = Sprite(pathToResource + ".png");
-	spriteSheetInfo = Tiles(pathToResource + ".xml", spriteElemNumber);
-
+	string path = pathToResource + tankName + tankName;
+	spriteSheet = Sprite(path + ".png");
+	spriteSheetInfo = Tiles(path + ".xml", spriteElemNumber);
 	objInfo.botLeftPosition = D3DXVECTOR2(x, y);
 	objInfo.direction = D3DXVECTOR2(1, 1);
 	objInfo.center = D3DXVECTOR2(width / 2.0f, height / 2.0f);
@@ -35,11 +36,12 @@ Tank::~Tank()
 }
 
 
-void Tank::UpdateVelocity()
+void Tank::UpdateInput()
 {
 	objInfo.velocity = D3DXVECTOR2(0, 0);
 	FACING prevFace = curFacing;
-	if (Key_Down(DIK_UP))
+	if (Key_Down(DIK_UP) && id == 0 ||
+		Key_Down(DIK_W) && id == 1)
 	{
 		//objInfo.botLeftPosition.y += speed * collisionTime;
 		objInfo.velocity.y = speed;
@@ -47,7 +49,8 @@ void Tank::UpdateVelocity()
 		objInfo.direction.x = 0;
 		curFacing = UP;
 	}
-	else if (Key_Down(DIK_DOWN))
+	else if (Key_Down(DIK_DOWN) && id == 0 ||
+		Key_Down(DIK_S) && id == 1)
 	{
 		//objInfo.botLeftPosition.y -= speed * collisionTime;
 		objInfo.velocity.y = -speed;
@@ -55,7 +58,8 @@ void Tank::UpdateVelocity()
 		objInfo.direction.x = 0;
 		curFacing = DOWN;
 	}
-	else if (Key_Down(DIK_LEFT))
+	else if (Key_Down(DIK_LEFT) && id == 0 ||
+		Key_Down(DIK_A) && id == 1)
 	{
 		//objInfo.botLeftPosition.x -= speed * collisionTime;
 		objInfo.velocity.x = -speed;
@@ -63,7 +67,8 @@ void Tank::UpdateVelocity()
 		objInfo.direction.y = 0;
 		curFacing = LEFT;
 	}
-	else if (Key_Down(DIK_RIGHT))
+	else if (Key_Down(DIK_RIGHT) && id == 0 ||
+		Key_Down(DIK_D) && id == 1)
 	{
 		//objInfo.botLeftPosition.x += speed * collisionTime;
 		objInfo.velocity.x = speed;
@@ -76,7 +81,6 @@ void Tank::UpdateVelocity()
 	{
 		D3DXVECTOR2 firingPos = objInfo.GetCenterPos();
 		//firingPos += objInfo.direction * (objInfo.width / 2 - 7);
-		bullet = new Bullet(firingPos.x, firingPos.y, curFacing);
 	}
 	if (prevFace != curFacing)
 		countDownFrameDelay = 0;
@@ -87,19 +91,11 @@ void Tank::UpdateVelocity()
 
 }
 
-void Tank::Update(Map* mapInfo)
+void Tank::Update(Map* mapInfo, Tank* tanks, int numberOfTanks)
 {
 	mapInfo->CollisionDetect(this, collisionDetect, 3);
-
-	if (abs(normalX) > 0.0001f)
-		objInfo.velocity.x = 0;
-	if (abs(normalY) > 0.0001f)
-		objInfo.velocity.y = 0;
-	objInfo.botLeftPosition += objInfo.velocity *collisionTime;
-	if (objInfo.velocity.x != 0)
-	{
-		auto err = "a";
-	}
+	TankCollideDetect(tanks, numberOfTanks);
+	
 
 	if (bullet != NULL)
 	{
@@ -110,9 +106,6 @@ void Tank::Update(Map* mapInfo)
 			bullet = NULL;
 		}
 	}
-
-	collisionTime = 1;
-	normalX = normalY = 0;
 }
 
 void Tank::Render(Camera camera)
@@ -196,9 +189,12 @@ void Tank::GoRight()
 
 void Tank::Shoot()
 {
-	D3DXVECTOR2 firingPos = objInfo.GetCenterPos();
-	//firingPos += objInfo.direction * (objInfo.width / 2 - 7);
-	bullet = new Bullet(firingPos.x, firingPos.y, curFacing);
+	if (!bullet)
+	{
+		D3DXVECTOR2 firingPos = objInfo.GetCenterPos();
+		//firingPos += objInfo.direction * (objInfo.width / 2 - 7);
+		bullet = new Bullet(id, firingPos.x, firingPos.y, curFacing);
+	}
 }
 
 void Tank::CalculateSnapshot(char input, int timestamp, int position)
@@ -229,16 +225,16 @@ void Tank::CalculateSnapshot(char input, int timestamp, int position)
 		switch (history[position].face)
 		{
 		case UP:
-			bullet = new Bullet(lagX, lagY+delay*3.0f, history[position].face);
+			bullet = new Bullet(id, lagX, lagY+delay*3.0f, history[position].face);
 			break;
 		case DOWN:
-			bullet = new Bullet(lagX, lagY - delay*3.0f, history[position].face);
+			bullet = new Bullet(id, lagX, lagY - delay*3.0f, history[position].face);
 			break;
 		case LEFT:
-			bullet = new Bullet(lagX - 3.0f*delay, lagY, history[position].face);
+			bullet = new Bullet(id, lagX - 3.0f*delay, lagY, history[position].face);
 			break;
 		case RIGHT:
-			bullet = new Bullet(lagX + 3.0f*delay, lagY, history[position].face);
+			bullet = new Bullet(id, lagX + 3.0f*delay, lagY, history[position].face);
 			break;
 		}
 		break;
@@ -281,4 +277,38 @@ void Tank::UpdateAnimation()
 		countDownFrameDelay = frameDelay;
 		curSprite = curSprite % 2 + startingFrame;
 	}
+}
+
+void Tank::TankCollideDetect(Tank * tanks, int numberOfTanks)
+{
+	for (int i = 0; i < numberOfTanks; i++)
+	{
+		/*if (tanks[i].id == id)
+			continue;*/
+		float normalX, normalY;
+		float collisionTime = SweptAABB(this->objInfo, tanks[i].objInfo, normalX, normalY);
+		if (collisionTime < 0.0f)
+			collisionTime = 0;
+		if (collisionTime < this->collisionTime && (normalX != 0 || normalY != 0))
+		{
+			this->collisionTime = collisionTime;
+			this->normalX = normalX;
+			this->normalY = normalY;
+		}
+
+	}
+}
+
+void Tank::UpdateVelocity()
+{
+	if (abs(normalX) > 0.0001f)
+		objInfo.velocity.x = 0;
+	if (abs(normalY) > 0.0001f)
+		objInfo.velocity.y = 0;
+	objInfo.botLeftPosition += objInfo.velocity *collisionTime;
+
+	collisionTime = 1;
+	normalX = normalY = 0;
+
+	
 }

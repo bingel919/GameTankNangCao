@@ -29,7 +29,8 @@ protected:
 	bool sleep_granularity_was_set;
 
 	Camera camera;
-	Tank tank;
+	Tank tank[8];
+	int numberOfTanks;
 	Map map;
 public:
 	VClock virtualClock;

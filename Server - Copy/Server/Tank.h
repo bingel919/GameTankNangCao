@@ -1,5 +1,7 @@
 #pragma once
 
+class Tank;
+
 #include <d3dx9.h>
 #include "Sprite.h"
 #include "Object.h"
@@ -42,14 +44,16 @@ public:
 
 	SOCKET sock;
 	SOCKADDR_IN server_address;
-	void UpdateVelocity();
-	void Update(Map* mapInfo);
+	void UpdateInput();
+	void Update(Map* mapInfo, Tank* tanks, int numberOfTanks);
 	void Render(Camera camera);
 	package *GetPackage();
 	void UsePackage(package *pak);
 	int SendPack(char command);
 	int ReceivPack();
-
+	void UpdateVelocity();
+	void UsePack(int player_x, int player_y);
 private:
 	void UpdateAnimation();
+	void TankCollideDetect(Tank* tanks, int numberOfTanks);
 };	

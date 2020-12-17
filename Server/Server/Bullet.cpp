@@ -14,8 +14,9 @@ Bullet::Bullet()
 	objType = BulletObj;
 }
 
-Bullet::Bullet(float x, float y, FACING direction)
+Bullet::Bullet(int inIdTank, float x, float y, FACING direction)
 {
+	idTank = inIdTank;
 	id = idInit;
 	idInit = (idInit + 1) % BULLET_MAX_RANGE;
 	objType = BulletObj;

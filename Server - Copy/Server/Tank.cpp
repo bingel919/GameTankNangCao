@@ -7,7 +7,7 @@
 
 
 unsigned int Tank::idInit = 0;
-const string Tank::pathToResource = "Resources/Tank/Tank1/Tank1";
+const string Tank::pathToResource = "Resources/Tank";
 
 Tank::Tank()
 {
@@ -17,9 +17,11 @@ Tank::Tank()
 Tank::Tank(int width, int height, float x, float y, FACING direction, int spriteElemNumber)
 {
 	id = idInit;
+	string tankName = "//Tank" + to_string(id + 1);
 	idInit = (idInit + 1) % TANK_MAX_RANGE;
-	spriteSheet = Sprite(pathToResource + ".png");
-	spriteSheetInfo = Tiles(pathToResource + ".xml", spriteElemNumber);
+	string path = pathToResource + tankName + tankName;
+	spriteSheet = Sprite(path + ".png");
+	spriteSheetInfo = Tiles(path + ".xml", spriteElemNumber);
 	objInfo.botLeftPosition = D3DXVECTOR2(x, y);
 	objInfo.direction = D3DXVECTOR2(1, 1);
 	objInfo.center = D3DXVECTOR2(width / 2.0f, height / 2.0f);
@@ -36,14 +38,14 @@ Tank::~Tank()
 {
 }
 
-bool rev = false;
-int previousTime = 0;
-void Tank::UpdateVelocity()
+
+void Tank::UpdateInput()
 {
 	bool sentPack = false;
 	objInfo.velocity = D3DXVECTOR2(0, 0);
 	FACING prevFace = curFacing;
-	if (Key_Down(DIK_UP))
+	if (Key_Down(DIK_UP) && id == 0 ||
+		Key_Down(DIK_W) && id == 1)
 	{
 		//objInfo.botLeftPosition.y += speed * collisionTime;
 		//if (!rev)
@@ -54,7 +56,8 @@ void Tank::UpdateVelocity()
 		SendPack('w');
 		sentPack = true;
 	}
-	else if (Key_Down(DIK_DOWN))
+	else if (Key_Down(DIK_DOWN) && id == 0 ||
+		Key_Down(DIK_S) && id == 1)
 	{
 	//	objInfo.botLeftPosition.y -= speed * collisionTime;
 		//if (!rev)
@@ -65,7 +68,8 @@ void Tank::UpdateVelocity()
 		SendPack('s');
 		sentPack = true;
 	}
-	else if (Key_Down(DIK_LEFT))
+	else if (Key_Down(DIK_LEFT) && id == 0 ||
+		Key_Down(DIK_A) && id == 1)
 	{
 		//objInfo.botLeftPosition.x -= speed * collisionTime;
 		//if (!rev)
@@ -76,7 +80,8 @@ void Tank::UpdateVelocity()
 		SendPack('a');
 		sentPack = true;
 	}
-	else if (Key_Down(DIK_RIGHT))
+	else if (Key_Down(DIK_RIGHT) && id == 0 ||
+		Key_Down(DIK_D) && id == 1)
 	{
 	//	objInfo.botLeftPosition.x += speed * collisionTime;
 		//if (!rev)
@@ -92,7 +97,7 @@ void Tank::UpdateVelocity()
 	{
 		D3DXVECTOR2 firingPos = objInfo.GetCenterPos();
 		//firingPos += objInfo.direction * (objInfo.width / 2 - 7);
-		bullet = new Bullet(firingPos.x, firingPos.y, curFacing);
+		bullet = new Bullet(id, firingPos.x, firingPos.y, curFacing);
 		SendPack('q');
 		sentPack = true;
 	}
@@ -104,18 +109,12 @@ void Tank::UpdateVelocity()
 		UpdateAnimation();
 
 }
-void Tank::Update(Map* mapInfo)
+
+void Tank::Update(Map* mapInfo, Tank* tanks, int numberOfTanks)
 {
 	mapInfo->CollisionDetect(this, collisionDetect, 3);
-	if (abs(normalX) > 0.0001f)
-		objInfo.velocity.x = 0;
-	if (abs(normalY) > 0.0001f)
-		objInfo.velocity.y = 0;
-	//if (!rev)
-	objInfo.botLeftPosition += objInfo.velocity *collisionTime;
-
-	collisionTime = 1;
-	normalX = normalY = 0;
+	TankCollideDetect(tanks, numberOfTanks);
+	
 
 	if (bullet != NULL)
 	{
@@ -194,7 +193,7 @@ int Tank::SendPack(char command)
 
 int Tank::ReceivPack()
 {
-	const int SOCKET_BUFFER_SIZE = 8000;
+	/*const int SOCKET_BUFFER_SIZE = 8000;
 	__int8 buffer[SOCKET_BUFFER_SIZE];
 
 	int flags = 0;
@@ -228,6 +227,10 @@ int Tank::ReceivPack()
 		read_index += sizeof(player_y);
 		bool POS;
 		memcpy(&POS, &buffer[read_index], sizeof(POS));
+		read_index += sizeof(POS);
+		int id;
+		memcpy(&id, &buffer[read_index], sizeof(id));
+		read_index += sizeof(id);
 		if (POS == true)
 		{
 			//auto end = std::chrono::system_clock::now();
@@ -235,12 +238,12 @@ int Tank::ReceivPack()
 			//auto timenow = static_cast<int>(end_time);
 			//
 			
-			if (abs(objInfo.botLeftPosition.x - player_x) >= 20 && abs(objInfo.botLeftPosition.y - player_y) >= 20)
-			{
+			//if (abs(objInfo.botLeftPosition.x - player_x) >= 20 && abs(objInfo.botLeftPosition.y - player_y) >= 10)
+			//{
 				objInfo.botLeftPosition.x = player_x;
 				objInfo.botLeftPosition.y = player_y;
-			}
-			//
+			//}
+			
 			
 		}
 		else
@@ -248,7 +251,8 @@ int Tank::ReceivPack()
 			ServerGame::DestroyBlock(player_x, player_y);
 		}
 		return 1;
-	}
+	}*/
+	return 0;
 }
 
 void Tank::UpdateAnimation()
@@ -260,4 +264,44 @@ void Tank::UpdateAnimation()
 		countDownFrameDelay = frameDelay;
 		curSprite = curSprite % 2 + startingFrame;
 	}
+}
+
+void Tank::TankCollideDetect(Tank * tanks, int numberOfTanks)
+{
+	for (int i = 0; i < numberOfTanks; i++)
+	{
+		/*if (tanks[i].id == id)
+			continue;*/
+		float normalX, normalY;
+		float collisionTime = SweptAABB(this->objInfo, tanks[i].objInfo, normalX, normalY);
+		if (collisionTime < 0.0f)
+			collisionTime = 0;
+		if (collisionTime < this->collisionTime && (normalX != 0 || normalY != 0))
+		{
+			this->collisionTime = collisionTime;
+			this->normalX = normalX;
+			this->normalY = normalY;
+		}
+
+	}
+}
+
+void Tank::UpdateVelocity()
+{
+	if (abs(normalX) > 0.0001f)
+		objInfo.velocity.x = 0;
+	if (abs(normalY) > 0.0001f)
+		objInfo.velocity.y = 0;
+	objInfo.botLeftPosition += objInfo.velocity *collisionTime;
+
+	collisionTime = 1;
+	normalX = normalY = 0;
+
+	
+}
+
+void Tank::UsePack(int player_x, int player_y)
+{
+	objInfo.botLeftPosition.x = player_x;
+	objInfo.botLeftPosition.y = player_y;
 }

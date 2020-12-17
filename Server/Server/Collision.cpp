@@ -3,9 +3,9 @@
 float SweptAABB(Box mainBox, Box box2, float &normal_x, float &normal_y)
 {
 	Box box1 = mainBox;
-	box1.botLeftPosition += D3DXVECTOR2(1, 1);
-	box1.width -= 1;
-	box1.height -= 1;
+	box1.botLeftPosition += D3DXVECTOR2(0.1, 0.1);
+	box1.width -= 0.1;
+	box1.height -= 0.1;
 
 	box1.velocity.x -= box2.velocity.x;
 	box1.velocity.y -= box2.velocity.y;

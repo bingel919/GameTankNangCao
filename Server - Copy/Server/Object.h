@@ -24,6 +24,7 @@ public:
 	float normalY = 0;
 	OBJECT_TYPE objType;
 	bool isDestroy = false;
+	bool isRespawn = false;
 };
 
 struct ObjectItemLinkedList
@@ -32,71 +33,71 @@ struct ObjectItemLinkedList
 	ObjectItemLinkedList* nextItem;
 };
 
-class ListObjectInGame
-{
-private:
-	ListObjectInGame() {}
-public:
-	static ListObjectInGame* instance;
-	ObjectItemLinkedList* headItem;
-
-	
-
-	~ListObjectInGame()
-	{
-		ObjectItemLinkedList* tmpItem;
-		if (headItem != NULL)
-		{
-			tmpItem = headItem;
-			headItem = headItem->nextItem;
-			delete(tmpItem);
-		}
-
-		if (instance != NULL)
-			delete(instance);
-	}
-
-	static ListObjectInGame* GetInstance()
-	{
-		if (!instance)
-			instance = new ListObjectInGame();
-		return instance;
-	}
-
-	void AddItem(Object item)
-	{
-		ObjectItemLinkedList* tmp = new ObjectItemLinkedList();
-		tmp->curItem = item;
-		if (headItem != NULL)
-			tmp->nextItem = headItem;
-		headItem = tmp;
-	}
-
-	void RemoveItem(Object item)
-	{
-		ObjectItemLinkedList* tmpPos = headItem;
-		ObjectItemLinkedList* prevPos = NULL;
-		while (tmpPos != NULL)
-		{
-			if (tmpPos->curItem.id == item.id && tmpPos->curItem.objType == item.objType)
-			{
-				//is first element
-				if (prevPos == NULL)
-				{
-					headItem = tmpPos->nextItem;
-					delete(tmpPos);
-					return;
-				}
-				prevPos->nextItem = tmpPos->nextItem;
-				delete(tmpPos);
-				return;
-			}
-			prevPos = tmpPos;
-			tmpPos = tmpPos->nextItem;
-		}
-	}
-
-};
+//class ListObjectInGame
+//{
+//private:
+//	ListObjectInGame() {}
+//public:
+//	static ListObjectInGame* instance;
+//	ObjectItemLinkedList* headItem;
+//
+//	
+//
+//	~ListObjectInGame()
+//	{
+//		ObjectItemLinkedList* tmpItem;
+//		if (headItem != NULL)
+//		{
+//			tmpItem = headItem;
+//			headItem = headItem->nextItem;
+//			delete(tmpItem);
+//		}
+//
+//		if (instance != NULL)
+//			delete(instance);
+//	}
+//
+//	static ListObjectInGame* GetInstance()
+//	{
+//		if (!instance)
+//			instance = new ListObjectInGame();
+//		return instance;
+//	}
+//
+//	void AddItem(Object item)
+//	{
+//		ObjectItemLinkedList* tmp = new ObjectItemLinkedList();
+//		tmp->curItem = item;
+//		if (headItem != NULL)
+//			tmp->nextItem = headItem;
+//		headItem = tmp;
+//	}
+//
+//	void RemoveItem(Object item)
+//	{
+//		ObjectItemLinkedList* tmpPos = headItem;
+//		ObjectItemLinkedList* prevPos = NULL;
+//		while (tmpPos != NULL)
+//		{
+//			if (tmpPos->curItem.id == item.id && tmpPos->curItem.objType == item.objType)
+//			{
+//				//is first element
+//				if (prevPos == NULL)
+//				{
+//					headItem = tmpPos->nextItem;
+//					delete(tmpPos);
+//					return;
+//				}
+//				prevPos->nextItem = tmpPos->nextItem;
+//				delete(tmpPos);
+//				return;
+//			}
+//			prevPos = tmpPos;
+//			tmpPos = tmpPos->nextItem;
+//		}
+//	}
+//
+//};
 
 const unsigned int TANK_MAX_RANGE = 4;
 const unsigned int BULLET_MAX_RANGE = 100;

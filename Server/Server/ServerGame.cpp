@@ -145,50 +145,7 @@ int lagX = 0;
 int lagY = 0;
 int previousX = 0;
 int previousY = 0;
-void SendBack(Tank tank, SOCKADDR_IN from)
-{
-	const int SOCKET_BUFFER_SIZE = 8000;
-	int flags = 0;
-	SOCKADDR* to = (SOCKADDR*)&from;
-	int to_length = sizeof(from);
-	__int8 buffer2[SOCKET_BUFFER_SIZE];
-	if (tank.GetX() == previousX)
-		lagX = 0;
-	if (tank.GetY() == previousY)
-		lagY = 0;
-	__int32 player_x = tank.GetX() + lagX;
-	__int32 player_y = tank.GetY() + lagY;
 
-	// create state packet
-	__int32 write_index = 0;
-	memcpy(&buffer2[write_index], &player_x, sizeof(player_x));
-	write_index += sizeof(player_x);
-
-	memcpy(&buffer2[write_index], &player_y, sizeof(player_y));
-	write_index += sizeof(player_y);
-
-	bool POS = true;
-
-	memcpy(&buffer2[write_index], &POS, sizeof(POS));
-	write_index += sizeof(POS);
-
-	//send back to client
-	int buffer_length = sizeof(player_x) + sizeof(player_y) + sizeof(POS);
-	if (sendto(sock, buffer2, buffer_length, flags, to, to_length) == SOCKET_ERROR)
-	{
-		printf("sendto failed: %d", WSAGetLastError());
-		auto err = WSAGetLastError();
-	}
-	else
-	{
-		char debug[50] = "Send back package";
-		OutputDebugString(debug);
-		auto err = "a";
-	}
-	auto end = std::chrono::system_clock::now();
-	std::time_t end_time = std::chrono::system_clock::to_time_t(end);
-	auto timenow = static_cast<int>(end_time);
-}
 int ServerRun(Tank &tank)
 {
 	const int SOCKET_BUFFER_SIZE = 8000;
@@ -291,7 +248,58 @@ int ServerRun(Tank &tank)
 	}
 	return 0;
 }
+void SendBack(Tank tank, SOCKADDR_IN from)
+{
+	int id = tank.GetID();
+	if (id == 0)
+	{
+		printf("debug");
+	}
+	const int SOCKET_BUFFER_SIZE = 8000;
+	int flags = 0;
+	SOCKADDR* to = (SOCKADDR*)&from;
+	int to_length = sizeof(from);
+	__int8 buffer2[SOCKET_BUFFER_SIZE];
+	if (tank.GetX() == previousX)
+		lagX = 0;
+	if (tank.GetY() == previousY)
+		lagY = 0;
+	__int32 player_x = tank.GetX();
+	__int32 player_y = tank.GetY();
+	previousX = player_x;
+	previousY = player_y;
+	// create state packet
+	__int32 write_index = 0;
+	memcpy(&buffer2[write_index], &player_x, sizeof(player_x));
+	write_index += sizeof(player_x);
 
+	memcpy(&buffer2[write_index], &player_y, sizeof(player_y));
+	write_index += sizeof(player_y);
+
+	bool POS = true;
+
+	memcpy(&buffer2[write_index], &POS, sizeof(POS));
+	write_index += sizeof(POS);
+	memcpy(&buffer2[write_index], &id, sizeof(id));
+	write_index += sizeof(id);
+
+	//send back to client
+	int buffer_length = sizeof(player_x) + sizeof(player_y) + sizeof(POS) + sizeof(id);
+	if (sendto(sock, buffer2, buffer_length, flags, to, to_length) == SOCKET_ERROR)
+	{
+		printf("sendto failed: %d", WSAGetLastError());
+		auto err = WSAGetLastError();
+	}
+	else
+	{
+		char debug[50] = "Send back package";
+		OutputDebugString(debug);
+		auto err = "a";
+	}
+	auto end = std::chrono::system_clock::now();
+	std::time_t end_time = std::chrono::system_clock::to_time_t(end);
+	auto timenow = static_cast<int>(end_time);
+}
 void ServerGame::SendBrickStatus(int i, int j)
 {
 
@@ -335,7 +343,10 @@ SOCKADDR_IN serverAddr, clientAddr;
 int ServerGame::Game_Init()
 {
 	virtualClock.Start();
-	tank = Tank(13, 13, 0, 0, UP, 8);
+	//ListObjectInGame* objList = ListObjectInGame::GetInstance();
+	numberOfTanks = 2;
+	tank[0] = Tank(12, 12, 0, 0, UP, 8);
+	tank[1] = Tank(12, 12, GAME_WIDTH-14, GAME_HEIGHT-14, UP, 8);
 	camera = Camera(GAME_WIDTH);
 	map = Map(8, 8, 7);
 	//socket
@@ -365,17 +376,20 @@ void ServerGame::Game_Run()
 	}*/
 
 	//Update
-	tank.UpdateVelocity();
-
+	//tank[0].UpdateInput();
+	tank[1].UpdateInput();
 	//socket
-	ServerRun(tank);
-	if (client1)
-		SendBack(tank, from1);
-	if (client2)
-		SendBack(tank, from2);
+	ServerRun(tank[1]);
+	//ServerRun(tank[0]);
+	SendBack(tank[1], from1);
+	//SendBack(tank[0], from1);
 
 	Update();
-	tank.Update(&map);
+	//tank[0].Update(&map, tank, numberOfTanks);
+	tank[1].Update(&map, tank, numberOfTanks);
+
+	//tank[0].UpdateVelocity();
+	tank[1].UpdateVelocity();
 
 	//Render
 	//start render
@@ -391,7 +405,8 @@ void ServerGame::Game_Run()
 
 		//begin
 
-		tank.Render(camera);
+		tank[0].Render(camera);
+		tank[1].Render(camera);
 		map.Render(camera);
 
 		//end

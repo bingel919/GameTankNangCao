@@ -1,4 +1,6 @@
 #include "ServerGame.h"
+#include <chrono>
+#include <ctime> 
 
 //id's to assign clients for our table
 unsigned int ServerGame::client_id = 0;
@@ -62,13 +64,76 @@ int ClientSetup()
 
 	server_address.sin_family = AF_INET;
 	server_address.sin_port = htons(PORT);
-	server_address.sin_addr.S_un.S_addr = inet_addr("127.0.0.1");
+	server_address.sin_addr.S_un.S_addr = inet_addr("192.168.0.47");
 
 	__int32 player_x;
 	__int32 player_y;
 	SetSocketBlockingEnabled(sock, false);
 }
+void ReceivePack(Tank &tank1, Tank &tank2)
+{
+	const int SOCKET_BUFFER_SIZE = 8000;
+	__int8 buffer[SOCKET_BUFFER_SIZE];
 
+	int flags = 0;
+	SOCKADDR_IN from;
+	int from_size = sizeof(from);
+	int bytes_received = recvfrom(sock, buffer, SOCKET_BUFFER_SIZE, flags, (SOCKADDR*)&from, &from_size);
+
+	if (bytes_received == SOCKET_ERROR)
+	{
+		printf("recvfrom returned SOCKET_ERROR, WSAGetLastError() %d", WSAGetLastError());
+		auto err = WSAGetLastError();
+		auto err2 = err;
+	}
+	else
+	{
+		auto end = std::chrono::system_clock::now();
+		std::time_t end_time = std::chrono::system_clock::to_time_t(end);
+		auto timestamp = static_cast<int>(end_time);
+
+		// grab data from packet
+		__int32 read_index = 0;
+
+		__int32 player_x;
+		__int32 player_y;
+
+		memcpy(&player_x, &buffer[read_index], sizeof(player_x));
+		read_index += sizeof(player_x);
+
+		memcpy(&player_y, &buffer[read_index], sizeof(player_y));
+		read_index += sizeof(player_y);
+		bool POS;
+		memcpy(&POS, &buffer[read_index], sizeof(POS));
+		read_index += sizeof(POS);
+		int id;
+		memcpy(&id, &buffer[read_index], sizeof(id));
+		read_index += sizeof(id);
+		if (POS == true)
+		{
+			//auto end = std::chrono::system_clock::now();
+			//std::time_t end_time = std::chrono::system_clock::to_time_t(end);
+			//auto timenow = static_cast<int>(end_time);
+			//
+
+			//if (abs(objInfo.botLeftPosition.x - player_x) >= 20 && abs(objInfo.botLeftPosition.y - player_y) >= 10)
+			//{
+			//if (id == 0)
+			//{
+			//	tank1.UsePack(player_x, player_y);
+			//}
+			//else
+				tank2.UsePack(player_x, player_y);
+			//}
+
+
+		}
+		else
+		{
+			ServerGame::DestroyBlock(player_x, player_y);
+		}
+	}
+}
 
 ServerGame::~ServerGame()
 {
@@ -76,21 +141,27 @@ ServerGame::~ServerGame()
 int ServerGame::Game_Init()
 {
 	virtualClock.Start();
-	ListObjectInGame* objList = ListObjectInGame::GetInstance();
-	tank = Tank(13, 13, 0, 0, UP, 8);
+	//ListObjectInGame* objList = ListObjectInGame::GetInstance();
+	numberOfTanks = 2;
+	tank[0] = Tank(12, 12, 0, 0, UP, 8);
+	tank[1] = Tank(12, 12, GAME_WIDTH-14, GAME_HEIGHT-14, UP, 8);
 	camera = Camera(GAME_WIDTH);
 	map = Map(8, 8, 7);
 	//socket
 	ClientSetup();
-	tank.sock = sock;
-	tank.server_address = server_address;
-	tank.SendPack('0');
+	tank[0].sock = sock;
+	tank[0].server_address = server_address;
+	tank[0].SendPack('0');
+	tank[1].sock = sock;
+	tank[1].server_address = server_address;
+	tank[1].SendPack('0');
 	//socket
 	return 1;
 }
 
 void ServerGame::Game_Run()
 {
+	int player = 1;
 	//reacquire input
 	dikeyboard->Acquire();
 	dimouse->Acquire();
@@ -106,10 +177,17 @@ void ServerGame::Game_Run()
 	//socket
 
 	//Update
-	tank.UpdateVelocity();
+	//if (player == 0)
+	tank[0].UpdateInput();
+	tank[1].UpdateInput();
 
 	Update();
-	tank.Update(&map);
+	ReceivePack(tank[0], tank[1]);
+	tank[0].Update(&map, tank, numberOfTanks);
+	tank[1].Update(&map, tank, numberOfTanks);
+
+	tank[0].UpdateVelocity();
+	tank[1].UpdateVelocity();
 
 	//Render
 	//start render
@@ -125,7 +203,8 @@ void ServerGame::Game_Run()
 
 		//begin
 
-		tank.Render(camera);
+		tank[0].Render(camera);
+		tank[1].Render(camera);
 		map.Render(camera);
 
 		//end
