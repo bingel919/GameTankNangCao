@@ -143,10 +143,79 @@ SOCKADDR_IN from1;
 SOCKADDR_IN from2;
 int lagX = 0;
 int lagY = 0;
-int previousX = 0;
-int previousY = 0;
+int previousX[2];
+int previousY[2];
+void ProcessInput(Tank &tank, _int8 buffer[])
+{
+	char client_input = buffer[0];
+	int delay = 0;
+	__int32 timestamp;
+	/*for (int i = 0; i < 4; i++)
+	{
+	timestamp[i] = buffer[i + 1];
+	}
+	int timeint = atoi(timestamp);*/
+	memcpy(&timestamp, &buffer[1], sizeof(timestamp));
+	//read_index += sizeof(player_x);
+	auto timeint = timestamp;
 
-int ServerRun(Tank &tank)
+	auto end = std::chrono::system_clock::now();
+	std::time_t end_time = std::chrono::system_clock::to_time_t(end);
+	auto timenow = static_cast<int>(end_time);
+	char debug[50] = "Receive package";
+	OutputDebugString(debug);
+	//auto shorttime = timenow % 10000;
+	timeint = timenow - timenow % 10000 + timeint;
+	delay = timenow - timeint;
+	printf("%d.%d.%d.%d:%d - %c\n", from.sin_addr.S_un.S_un_b.s_b1, from.sin_addr.S_un.S_un_b.s_b2, from.sin_addr.S_un.S_un_b.s_b3, from.sin_addr.S_un.S_un_b.s_b4, from.sin_port, client_input);
+
+	if (!tank.history.empty())
+	{
+		for (int i = 0; i++; i < tank.history.size())
+		{
+			if (tank.history[i].timestamp <= timeint && timeint <= tank.history[i + 1].timestamp)
+			{
+				tank.CalculateSnapshot(client_input, tank.history[i].timestamp, i);
+			}
+		}
+	}
+	tank.SaveSnapShot(client_input, timenow);
+
+
+	switch (client_input)
+	{
+	case 'w':
+		tank.GoUp();
+		lagY = tank.GetSpeed()*delay;
+		break;
+
+	case 'a':
+		tank.GoLeft();
+		lagX = -tank.GetSpeed()*delay;
+		//SendBack(tank, from);
+		break;
+
+	case 's':
+		tank.GoDown();
+		lagY = -tank.GetSpeed()*delay;
+		//SendBack(tank, from);
+		break;
+
+	case 'd':
+		tank.GoRight();
+		lagX = tank.GetSpeed()*delay;
+		//SendBack(tank, from);
+		break;
+	case 'q':
+		tank.Shoot();
+		//SendBack(tank, from);
+		break;
+	default:
+		printf("unhandled input %c\n", client_input);
+		break;
+	}
+}
+int ServerRun(Tank &tank1, Tank &tank2)
 {
 	const int SOCKET_BUFFER_SIZE = 8000;
 	__int8 buffer[SOCKET_BUFFER_SIZE];
@@ -178,133 +247,127 @@ int ServerRun(Tank &tank)
 			}
 		}
 		// process input
-		char client_input = buffer[0];
-		int delay = 0;
-		__int32 timestamp;
-		/*for (int i = 0; i < 4; i++)
+		if (from1.sin_addr.s_addr == from.sin_addr.s_addr)
 		{
-			timestamp[i] = buffer[i + 1];
+			ProcessInput(tank1, buffer);
 		}
-		int timeint = atoi(timestamp);*/
-		memcpy(&timestamp, &buffer[1], sizeof(timestamp));
-		//read_index += sizeof(player_x);
-		auto timeint = timestamp;
-
-		auto end = std::chrono::system_clock::now();
-		std::time_t end_time = std::chrono::system_clock::to_time_t(end);
-		auto timenow = static_cast<int>(end_time);
-		char debug[50] = "Receive package";
-		OutputDebugString(debug);
-		//auto shorttime = timenow % 10000;
-		timeint = timenow - timenow % 10000 + timeint;
-		delay = timenow - timeint;
-		printf("%d.%d.%d.%d:%d - %c\n", from.sin_addr.S_un.S_un_b.s_b1, from.sin_addr.S_un.S_un_b.s_b2, from.sin_addr.S_un.S_un_b.s_b3, from.sin_addr.S_un.S_un_b.s_b4, from.sin_port, client_input);
-
-		if (!tank.history.empty())
+		if (from2.sin_addr.s_addr == from.sin_addr.s_addr)
 		{
-			for (int i = 0; i++; i < tank.history.size())
-			{
-				if (tank.history[i].timestamp <= timeint && timeint <= tank.history[i + 1].timestamp)
-				{
-					tank.CalculateSnapshot(client_input, tank.history[i].timestamp, i);
-				}
-			}
+			ProcessInput(tank2, buffer);
 		}
-		tank.SaveSnapShot(client_input, timenow);
-
-
-		switch (client_input)
-		{
-		case 'w':
-			tank.GoUp();
-			lagY = tank.GetSpeed()*delay;
-			break;
-
-		case 'a':
-			tank.GoLeft();
-			lagX = -tank.GetSpeed()*delay;
-			//SendBack(tank, from);
-			break;
-
-		case 's':
-			tank.GoDown();
-			lagY = -tank.GetSpeed()*delay;
-			//SendBack(tank, from);
-			break;
-
-		case 'd':
-			tank.GoRight();
-			lagX = tank.GetSpeed()*delay;
-			//SendBack(tank, from);
-			break;
-		case 'q':
-			tank.Shoot();
-			//SendBack(tank, from);
-			break;
-		default:
-			printf("unhandled input %c\n", client_input);
-			break;
-		}
+		
 	}
 	return 0;
 }
-void SendBack(Tank tank, SOCKADDR_IN from)
+bool SentFrom1 = false;
+int SendBack(Tank tank[], SOCKADDR_IN from1, SOCKADDR_IN from2)
 {
-	int id = tank.GetID();
-	if (id == 0)
+	if (from2.sin_addr.s_addr == from.sin_addr.s_addr)
 	{
-		printf("debug");
+		int a = 0;
+	}
+	if (tank[0].GetX() == previousX[0] && tank[0].GetY() == previousY[0] && tank[1].GetX() == previousX[1] && tank[1].GetY() == previousY[1])
+		return 0;
+	if (tank[1].GetX() != previousX[1] && tank[1].GetY() != previousY[1])
+	{
+		int debug = 0;
 	}
 	const int SOCKET_BUFFER_SIZE = 8000;
 	int flags = 0;
-	SOCKADDR* to = (SOCKADDR*)&from;
+	SOCKADDR* to1 = (SOCKADDR*)&from1;
+	SOCKADDR* to2 = (SOCKADDR*)&from2;
 	int to_length = sizeof(from);
 	__int8 buffer2[SOCKET_BUFFER_SIZE];
-	if (tank.GetX() == previousX)
-		lagX = 0;
-	if (tank.GetY() == previousY)
-		lagY = 0;
-	__int32 player_x = tank.GetX();
-	__int32 player_y = tank.GetY();
-	previousX = player_x;
-	previousY = player_y;
+	//if (tank.GetX() == previousX[tank.GetID()])
+		//lagX = 0;
+	//if (tank.GetY() == previousY[tank.GetID()])
+		//lagY = 0;
+	__int32 player_x[2];
+	__int32 player_y[2];
+
+	player_x[0] = tank[0].GetX();
+	player_y[0] = tank[0].GetY();
+	previousX[0] = player_x[0];
+	previousY[0] = player_y[0];
+
+	player_x[1] = tank[1].GetX();
+	player_y[1] = tank[1].GetY();
+	previousX[1] = player_x[1];
+	previousY[1] = player_y[1];
+
+	//player_x[1] = player_x[1] + lagX*3;
+	//player_y[1] = player_y[1] + lagY*3;
+
 	// create state packet
 	__int32 write_index = 0;
-	memcpy(&buffer2[write_index], &player_x, sizeof(player_x));
-	write_index += sizeof(player_x);
-
-	memcpy(&buffer2[write_index], &player_y, sizeof(player_y));
-	write_index += sizeof(player_y);
 
 	bool POS = true;
 
 	memcpy(&buffer2[write_index], &POS, sizeof(POS));
 	write_index += sizeof(POS);
-	memcpy(&buffer2[write_index], &id, sizeof(id));
-	write_index += sizeof(id);
+
+	memcpy(&buffer2[write_index], &player_x, sizeof(player_x));
+	write_index += sizeof(player_x);
+
+	memcpy(&buffer2[write_index], &player_y, sizeof(player_y));
+	write_index += sizeof(player_y);
+	
 
 	//send back to client
-	int buffer_length = sizeof(player_x) + sizeof(player_y) + sizeof(POS) + sizeof(id);
-	if (sendto(sock, buffer2, buffer_length, flags, to, to_length) == SOCKET_ERROR)
+	int buffer_length = sizeof(player_x) + sizeof(player_y) + sizeof(POS);
+	if (SentFrom1)
 	{
-		printf("sendto failed: %d", WSAGetLastError());
-		auto err = WSAGetLastError();
+		if (sendto(sock, buffer2, buffer_length, flags, to1, to_length) == SOCKET_ERROR)
+		{
+			printf("sendto failed: %d", WSAGetLastError());
+			auto err = WSAGetLastError();
+			if (from2.sin_addr.s_addr == from.sin_addr.s_addr)
+			{
+				int a = 0;
+			}
+		}
+		else
+		{
+			if (from2.sin_addr.s_addr == from.sin_addr.s_addr)
+			{
+				int a = 0;
+			}
+			char debug[50] = "Send back package";
+			OutputDebugString(debug);
+			auto err = "a";
+		}
 	}
 	else
 	{
-		char debug[50] = "Send back package";
-		OutputDebugString(debug);
-		auto err = "a";
+		if (sendto(sock, buffer2, buffer_length, flags, to2, to_length) == SOCKET_ERROR)
+		{
+			printf("sendto failed: %d", WSAGetLastError());
+			auto err = WSAGetLastError();
+			if (from2.sin_addr.s_addr == from.sin_addr.s_addr)
+			{
+				int a = 0;
+			}
+		}
+		else
+		{
+			if (from2.sin_addr.s_addr == from.sin_addr.s_addr)
+			{
+				int a = 0;
+			}
+			char debug[50] = "Send back package";
+			OutputDebugString(debug);
+			auto err = "a";
+		}
 	}
-	auto end = std::chrono::system_clock::now();
-	std::time_t end_time = std::chrono::system_clock::to_time_t(end);
-	auto timenow = static_cast<int>(end_time);
+	SentFrom1 = !SentFrom1;
+	return 1;
 }
 void ServerGame::SendBrickStatus(int i, int j)
 {
 
 	int flags = 0;
-	SOCKADDR* to = (SOCKADDR*)&from;
+	SOCKADDR* to1 = (SOCKADDR*)&from1;
+	SOCKADDR* to2 = (SOCKADDR*)&from2;
 	auto to_length = sizeof(from);
 
 	const int SOCKET_BUFFER_SIZE = 8000;
@@ -312,20 +375,29 @@ void ServerGame::SendBrickStatus(int i, int j)
 	// create state packet
 	__int32 write_index = 0;
 
+	bool POS = false;
+	memcpy(&buffer2[write_index], &POS, sizeof(POS));
+	write_index += sizeof(POS);
+
 	memcpy(&buffer2[write_index], &i, sizeof(i));
 	write_index += sizeof(i);
 
 	memcpy(&buffer2[write_index], &j, sizeof(j));
 	write_index += sizeof(j);
-	
-	bool POS = false;
-	memcpy(&buffer2[write_index], &POS, sizeof(POS));
-	write_index += sizeof(POS);
+
 	
 
 	// send back to client
 	int buffer_length = sizeof(i) + sizeof(j) + sizeof(POS);
-	if (sendto(sock, buffer2, buffer_length, flags, to, to_length) == SOCKET_ERROR)
+	if (sendto(sock, buffer2, buffer_length, flags, to1, to_length) == SOCKET_ERROR)
+	{
+		printf("sendto failed: %d", WSAGetLastError());
+		auto err = WSAGetLastError();
+		err = err;
+	}
+	else
+		auto err = "a";
+	if (sendto(sock, buffer2, buffer_length, flags, to2, to_length) == SOCKET_ERROR)
 	{
 		printf("sendto failed: %d", WSAGetLastError());
 		auto err = WSAGetLastError();
@@ -376,19 +448,44 @@ void ServerGame::Game_Run()
 	}*/
 
 	//Update
-	//tank[0].UpdateInput();
-	tank[1].UpdateInput();
+	tank[0].Respawn();
+	tank[1].Respawn();
+
+	Bullet* tmp = tank[0].UpdateInput();
+	if (tmp != NULL)
+		bullets.push_back(tmp);
+	tmp = tank[1].UpdateInput();
+	if (tmp != NULL)
+		bullets.push_back(tmp);
+
 	//socket
-	ServerRun(tank[1]);
-	//ServerRun(tank[0]);
-	SendBack(tank[1], from1);
-	//SendBack(tank[0], from1);
+	ServerRun(tank[1], tank[0]);
+	ServerRun(tank[1], tank[0]);
+	ServerRun(tank[1], tank[0]);
+	SendBack(tank, from1, from2);
 
 	Update();
-	//tank[0].Update(&map, tank, numberOfTanks);
+	tank[0].Update(&map, tank, numberOfTanks);
 	tank[1].Update(&map, tank, numberOfTanks);
 
-	//tank[0].UpdateVelocity();
+	for (int i = 0; i < bullets.size(); i++)
+	{
+		tank[0].TankCollideBullet(bullets[i]);
+		tank[1].TankCollideBullet(bullets[i]);
+	}
+
+	tank[0].BulletReset();
+	tank[1].BulletReset();
+
+	for (int i = 0; i < bullets.size(); i++)
+		if (bullets[i]->isDestroy)
+		{
+			delete bullets[i];
+			bullets[i] = nullptr;
+			bullets.erase(bullets.begin() + i);
+		}
+
+	tank[0].UpdateVelocity();
 	tank[1].UpdateVelocity();
 
 	//Render

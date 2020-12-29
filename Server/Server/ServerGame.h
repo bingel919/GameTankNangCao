@@ -30,6 +30,7 @@ protected:
 
 	Camera camera;
 	Tank tank[8];
+	vector<Bullet*> bullets;
 	int numberOfTanks;
 	Map map;
 public:

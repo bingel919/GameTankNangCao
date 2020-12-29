@@ -46,12 +46,17 @@ protected:
 	Tiles spriteSheetInfo;
 	MapElement collisionDetect[3] = { BRICK, STONE, WATER };
 	Bullet* bullet = NULL;
+
+	D3DXVECTOR2 respawnPos;
+
+	bool bShoot;
+
 public:
 	Tank();
 	Tank(int width, int height, float x, float y, FACING direction, int spriteElemNumber);
 	~Tank();
 
-	void UpdateInput();
+	Bullet* UpdateInput();
 	void Update(Map* mapInfo, Tank* tanks, int numberOfTanks);
 	void Render(Camera camera);
 	package *GetPackage();
@@ -75,8 +80,10 @@ public:
 	vector<snapshot> history;
 	void CalculateSnapshot(char input, int timestamp, int position);
 	void SaveSnapShot(char input, int timestamp);
+	void TankCollideBullet(Bullet* bullet);
 	void UpdateVelocity();
-
+	void BulletReset();
+	void Respawn();
 private:
 	void UpdateAnimation();
 	void TankCollideDetect(Tank* tanks, int numberOfTanks);

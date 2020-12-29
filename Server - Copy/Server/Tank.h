@@ -44,7 +44,7 @@ public:
 
 	SOCKET sock;
 	SOCKADDR_IN server_address;
-	void UpdateInput();
+	void UpdateInput(int player);
 	void Update(Map* mapInfo, Tank* tanks, int numberOfTanks);
 	void Render(Camera camera);
 	package *GetPackage();
@@ -56,4 +56,6 @@ public:
 private:
 	void UpdateAnimation();
 	void TankCollideDetect(Tank* tanks, int numberOfTanks);
+	int previousX ;
+	int previousY;
 };	

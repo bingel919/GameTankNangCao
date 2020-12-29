@@ -31,6 +31,8 @@ Tank::Tank(int width, int height, float x, float y, FACING direction, int sprite
 
 	startingFrame = direction * 2;
 	curFacing = direction;
+	previousX = objInfo.botLeftPosition.x;
+	previousY = objInfo.botLeftPosition.y;
 }
 
 
@@ -38,72 +40,70 @@ Tank::~Tank()
 {
 }
 
-
-void Tank::UpdateInput()
+void Tank::UpdateInput(int player)
 {
-	bool sentPack = false;
-	objInfo.velocity = D3DXVECTOR2(0, 0);
-	FACING prevFace = curFacing;
-	if (Key_Down(DIK_UP) && id == 0 ||
-		Key_Down(DIK_W) && id == 1)
-	{
-		//objInfo.botLeftPosition.y += speed * collisionTime;
-		//if (!rev)
-		objInfo.velocity.y = speed;
-		objInfo.direction.y = 1;
-		objInfo.direction.x = 0;
-		curFacing = UP;
-		SendPack('w');
-		sentPack = true;
-	}
-	else if (Key_Down(DIK_DOWN) && id == 0 ||
-		Key_Down(DIK_S) && id == 1)
-	{
-	//	objInfo.botLeftPosition.y -= speed * collisionTime;
-		//if (!rev)
-		objInfo.velocity.y = -speed;
-		objInfo.direction.y = -1;
-		objInfo.direction.x = 0;
-		curFacing = DOWN;
-		SendPack('s');
-		sentPack = true;
-	}
-	else if (Key_Down(DIK_LEFT) && id == 0 ||
-		Key_Down(DIK_A) && id == 1)
-	{
-		//objInfo.botLeftPosition.x -= speed * collisionTime;
-		//if (!rev)
-		objInfo.velocity.x = -speed;
-		objInfo.direction.x = -1;
-		objInfo.direction.y = 0;
-		curFacing = LEFT;
-		SendPack('a');
-		sentPack = true;
-	}
-	else if (Key_Down(DIK_RIGHT) && id == 0 ||
-		Key_Down(DIK_D) && id == 1)
-	{
-	//	objInfo.botLeftPosition.x += speed * collisionTime;
-		//if (!rev)
-		objInfo.velocity.x = speed;
-		objInfo.direction.x = 1;
-		objInfo.direction.y = 0;
-		curFacing = RIGHT;
-		SendPack('d');
-		sentPack = true;
-	}
+		bool sentPack = false;
+		objInfo.velocity = D3DXVECTOR2(0, 0);
+		FACING prevFace = curFacing;
+		if (Key_Down(DIK_UP) && id == 0 ||
+			Key_Down(DIK_W) && id == 1)
+		{
+			//objInfo.botLeftPosition.y += speed * collisionTime;
+			//if (!rev)
+			objInfo.velocity.y = speed;
+			objInfo.direction.y = 1;
+			objInfo.direction.x = 0;
+			curFacing = UP;
+			SendPack('w');
+			sentPack = true;
+		}
+		else if (Key_Down(DIK_DOWN) && id == 0 ||
+			Key_Down(DIK_S) && id == 1)
+		{
+			//	objInfo.botLeftPosition.y -= speed * collisionTime;
+				//if (!rev)
+			objInfo.velocity.y = -speed;
+			objInfo.direction.y = -1;
+			objInfo.direction.x = 0;
+			curFacing = DOWN;
+			SendPack('s');
+			sentPack = true;
+		}
+		else if (Key_Down(DIK_LEFT) && id == 0 ||
+			Key_Down(DIK_A) && id == 1)
+		{
+			//objInfo.botLeftPosition.x -= speed * collisionTime;
+			//if (!rev)
+			objInfo.velocity.x = -speed;
+			objInfo.direction.x = -1;
+			objInfo.direction.y = 0;
+			curFacing = LEFT;
+			SendPack('a');
+			sentPack = true;
+		}
+		else if (Key_Down(DIK_RIGHT) && id == 0 ||
+			Key_Down(DIK_D) && id == 1)
+		{
+			//	objInfo.botLeftPosition.x += speed * collisionTime;
+				//if (!rev)
+			objInfo.velocity.x = speed;
+			objInfo.direction.x = 1;
+			objInfo.direction.y = 0;
+			curFacing = RIGHT;
+			SendPack('d');
+			sentPack = true;
+		}
 
-	if (Key_Down(DIK_SPACE) && bullet == NULL)
-	{
-		D3DXVECTOR2 firingPos = objInfo.GetCenterPos();
-		//firingPos += objInfo.direction * (objInfo.width / 2 - 7);
-		bullet = new Bullet(id, firingPos.x, firingPos.y, curFacing);
-		SendPack('q');
-		sentPack = true;
-	}
-	if (prevFace != curFacing)
-		countDownFrameDelay = 0;
-
+		if (Key_Down(DIK_SPACE) && bullet == NULL)
+		{
+			D3DXVECTOR2 firingPos = objInfo.GetCenterPos();
+			//firingPos += objInfo.direction * (objInfo.width / 2 - 7);
+			bullet = new Bullet(id, firingPos.x, firingPos.y, curFacing);
+			SendPack('q');
+			sentPack = true;
+		}
+		if (prevFace != curFacing)
+			countDownFrameDelay = 0;
 
 	if (objInfo.velocity != D3DXVECTOR2(0, 0))
 		UpdateAnimation();
@@ -288,6 +288,7 @@ void Tank::TankCollideDetect(Tank * tanks, int numberOfTanks)
 
 void Tank::UpdateVelocity()
 {
+
 	if (abs(normalX) > 0.0001f)
 		objInfo.velocity.x = 0;
 	if (abs(normalY) > 0.0001f)
@@ -297,11 +298,24 @@ void Tank::UpdateVelocity()
 	collisionTime = 1;
 	normalX = normalY = 0;
 
-	
+	if (objInfo.botLeftPosition.x > previousX)
+		curFacing = RIGHT;
+	else if (objInfo.botLeftPosition.x < previousX)
+		curFacing = LEFT;
+	else if (objInfo.botLeftPosition.y > previousY)
+		curFacing = UP;
+	else if (objInfo.botLeftPosition.y < previousY)
+		curFacing = DOWN;
+	previousX = objInfo.botLeftPosition.x;
+	previousY = objInfo.botLeftPosition.y;
+	UpdateAnimation();
 }
 
 void Tank::UsePack(int player_x, int player_y)
 {
-	objInfo.botLeftPosition.x = player_x;
-	objInfo.botLeftPosition.y = player_y;
+	if (abs(objInfo.botLeftPosition.x - player_x) > 10 || abs(objInfo.botLeftPosition.y - player_y))
+	{
+		objInfo.botLeftPosition.x = player_x;
+		objInfo.botLeftPosition.y = player_y;
+	}
 }

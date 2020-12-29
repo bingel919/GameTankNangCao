@@ -64,7 +64,7 @@ int ClientSetup()
 
 	server_address.sin_family = AF_INET;
 	server_address.sin_port = htons(PORT);
-	server_address.sin_addr.S_un.S_addr = inet_addr("192.168.0.47");
+	server_address.sin_addr.S_un.S_addr = inet_addr("192.168.0.27");
 
 	__int32 player_x;
 	__int32 player_y;
@@ -95,22 +95,19 @@ void ReceivePack(Tank &tank1, Tank &tank2)
 		// grab data from packet
 		__int32 read_index = 0;
 
-		__int32 player_x;
-		__int32 player_y;
-
-		memcpy(&player_x, &buffer[read_index], sizeof(player_x));
-		read_index += sizeof(player_x);
-
-		memcpy(&player_y, &buffer[read_index], sizeof(player_y));
-		read_index += sizeof(player_y);
 		bool POS;
 		memcpy(&POS, &buffer[read_index], sizeof(POS));
 		read_index += sizeof(POS);
-		int id;
-		memcpy(&id, &buffer[read_index], sizeof(id));
-		read_index += sizeof(id);
 		if (POS == true)
 		{
+			__int32 player_x[2];
+			__int32 player_y[2];
+
+			memcpy(&player_x, &buffer[read_index], sizeof(player_x));
+			read_index += sizeof(player_x);
+
+			memcpy(&player_y, &buffer[read_index], sizeof(player_y));
+			read_index += sizeof(player_y);
 			//auto end = std::chrono::system_clock::now();
 			//std::time_t end_time = std::chrono::system_clock::to_time_t(end);
 			//auto timenow = static_cast<int>(end_time);
@@ -123,13 +120,22 @@ void ReceivePack(Tank &tank1, Tank &tank2)
 			//	tank1.UsePack(player_x, player_y);
 			//}
 			//else
-				tank2.UsePack(player_x, player_y);
+				tank2.UsePack(player_x[1], player_y[1]);
+				tank1.UsePack(player_x[0], player_y[0]);
 			//}
 
 
 		}
 		else
 		{
+			__int32 player_x;
+			__int32 player_y;
+
+			memcpy(&player_x, &buffer[read_index], sizeof(player_x));
+			read_index += sizeof(player_x);
+
+			memcpy(&player_y, &buffer[read_index], sizeof(player_y));
+			read_index += sizeof(player_y);
 			ServerGame::DestroyBlock(player_x, player_y);
 		}
 	}
@@ -177,9 +183,8 @@ void ServerGame::Game_Run()
 	//socket
 
 	//Update
-	//if (player == 0)
-	tank[0].UpdateInput();
-	tank[1].UpdateInput();
+	tank[0].UpdateInput(player);
+	tank[1].UpdateInput(player);
 
 	Update();
 	ReceivePack(tank[0], tank[1]);
