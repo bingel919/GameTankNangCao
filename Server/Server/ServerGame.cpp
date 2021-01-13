@@ -78,18 +78,6 @@ bool SetSocketBlockingEnabled(int fd, bool blocking)
 	return (fcntl(fd, F_SETFL, flags) == 0) ? true : false;
 #endif
 }
-void NaiveSend(int inSocket, const package* inTank)
-{
-	send(inSocket,
-		reinterpret_cast<const char*>(inTank),
-		sizeof(Tank), 0);
-}
-void NaiveRecv(int inSocket, package* outTank)
-{
-	recv(inSocket,
-		reinterpret_cast<char*>(outTank),
-		sizeof(Tank), 0);
-}
 SOCKET sock;
 ServerGame::ServerGame()
 {
@@ -97,8 +85,9 @@ ServerGame::ServerGame()
 	sleep_granularity_was_set = timeBeginPeriod(sleep_granularity_ms) == TIMERR_NOERROR;
 
 	QueryPerformanceFrequency(&clock_frequency);
+	SentFrom1 = false;
 }
-int ServerSetUp()
+int ServerGame::ServerSetUp()
 {
 	WORD winsock_version = 0x202;
 	WSADATA winsock_data;
@@ -145,7 +134,7 @@ int lagX = 0;
 int lagY = 0;
 int previousX[2];
 int previousY[2];
-void ProcessInput(Tank &tank, _int8 buffer[])
+void ServerGame::ProcessInput(Tank &tank, _int8 buffer[])
 {
 	char client_input = buffer[0];
 	int delay = 0;
@@ -181,7 +170,7 @@ void ProcessInput(Tank &tank, _int8 buffer[])
 	}
 	tank.SaveSnapShot(client_input, timenow);
 
-
+	Bullet* temp = nullptr;
 	switch (client_input)
 	{
 	case 'w':
@@ -207,7 +196,9 @@ void ProcessInput(Tank &tank, _int8 buffer[])
 		//SendBack(tank, from);
 		break;
 	case 'q':
-		tank.Shoot();
+		temp = tank.Shoot(false);
+		if (temp != nullptr)
+			bullets.push_back(temp);
 		//SendBack(tank, from);
 		break;
 	default:
@@ -215,7 +206,7 @@ void ProcessInput(Tank &tank, _int8 buffer[])
 		break;
 	}
 }
-int ServerRun(Tank &tank1, Tank &tank2)
+int ServerGame::ServerRun(Tank &tank1, Tank &tank2)
 {
 	const int SOCKET_BUFFER_SIZE = 8000;
 	__int8 buffer[SOCKET_BUFFER_SIZE];
@@ -259,15 +250,17 @@ int ServerRun(Tank &tank1, Tank &tank2)
 	}
 	return 0;
 }
-bool SentFrom1 = false;
-int SendBack(Tank tank[], SOCKADDR_IN from1, SOCKADDR_IN from2)
+int ServerGame::SendBack(Tank tank[], SOCKADDR_IN from1, SOCKADDR_IN from2)
 {
 	if (from2.sin_addr.s_addr == from.sin_addr.s_addr)
 	{
 		int a = 0;
 	}
-	if (tank[0].GetX() == previousX[0] && tank[0].GetY() == previousY[0] && tank[1].GetX() == previousX[1] && tank[1].GetY() == previousY[1])
+	if (tank[0].GetX() == previousX[0] && tank[0].GetY() == previousY[0] && tank[1].GetX() == previousX[1] && tank[1].GetY() == previousY[1] && !tank[0].GetShoot() && !tank[1].GetShoot())
+	{
+		auto x = tank[0].GetX();
 		return 0;
+	}
 	if (tank[1].GetX() != previousX[1] && tank[1].GetY() != previousY[1])
 	{
 		int debug = 0;
@@ -295,6 +288,16 @@ int SendBack(Tank tank[], SOCKADDR_IN from1, SOCKADDR_IN from2)
 	previousX[1] = player_x[1];
 	previousY[1] = player_y[1];
 
+	bool shoot[2];
+	shoot[0] = tank[0].GetShoot();
+	shoot[1] = tank[1].GetShoot();
+	tank[0].SetShoot(false);
+	tank[1].SetShoot(false);
+	if (shoot[0])
+	{
+		auto debug = "";
+	}
+
 	//player_x[1] = player_x[1] + lagX*3;
 	//player_y[1] = player_y[1] + lagY*3;
 
@@ -311,12 +314,13 @@ int SendBack(Tank tank[], SOCKADDR_IN from1, SOCKADDR_IN from2)
 
 	memcpy(&buffer2[write_index], &player_y, sizeof(player_y));
 	write_index += sizeof(player_y);
+
+	memcpy(&buffer2[write_index], &shoot, sizeof(shoot));
+	write_index += sizeof(shoot);
 	
 
 	//send back to client
-	int buffer_length = sizeof(player_x) + sizeof(player_y) + sizeof(POS);
-	if (SentFrom1)
-	{
+	int buffer_length = sizeof(player_x) + sizeof(player_y) + sizeof(POS) + sizeof(shoot);
 		if (sendto(sock, buffer2, buffer_length, flags, to1, to_length) == SOCKET_ERROR)
 		{
 			printf("sendto failed: %d", WSAGetLastError());
@@ -336,9 +340,6 @@ int SendBack(Tank tank[], SOCKADDR_IN from1, SOCKADDR_IN from2)
 			OutputDebugString(debug);
 			auto err = "a";
 		}
-	}
-	else
-	{
 		if (sendto(sock, buffer2, buffer_length, flags, to2, to_length) == SOCKET_ERROR)
 		{
 			printf("sendto failed: %d", WSAGetLastError());
@@ -358,7 +359,6 @@ int SendBack(Tank tank[], SOCKADDR_IN from1, SOCKADDR_IN from2)
 			OutputDebugString(debug);
 			auto err = "a";
 		}
-	}
 	SentFrom1 = !SentFrom1;
 	return 1;
 }
@@ -477,13 +477,25 @@ void ServerGame::Game_Run()
 	tank[0].BulletReset();
 	tank[1].BulletReset();
 
-	for (int i = 0; i < bullets.size(); i++)
+	int i = 0;
+	while (i < bullets.size())
+	{
 		if (bullets[i]->isDestroy)
 		{
 			delete bullets[i];
 			bullets[i] = nullptr;
 			bullets.erase(bullets.begin() + i);
 		}
+		else i++;
+	}
+
+	/*for (int i = 0; i < bullets.size(); i++)
+		if (bullets[i]->isDestroy)
+		{
+			delete bullets[i];
+			bullets[i] = nullptr;
+			bullets.erase(bullets.begin() + i);
+		}*/
 
 	tank[0].UpdateVelocity();
 	tank[1].UpdateVelocity();
@@ -504,6 +516,9 @@ void ServerGame::Game_Run()
 
 		tank[0].Render(camera);
 		tank[1].Render(camera);
+
+		for (int i = 0; i < bullets.size(); i++)
+			bullets[i]->Render(camera);
 		map.Render(camera);
 
 		//end

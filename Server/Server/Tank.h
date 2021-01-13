@@ -68,7 +68,7 @@ public:
 	void GoDown();
 	void GoLeft();
 	void GoRight();
-	void Shoot();
+	Bullet* Shoot(bool isCreateBullet);
 	int GetID()
 	{
 		return id;
@@ -76,6 +76,15 @@ public:
 	float GetSpeed()
 	{
 		return speed;
+	}
+	bool GetShoot()
+	{
+		return bShoot;
+	}
+	void SetShoot(bool shoot)
+	{
+		if (bShoot)
+		bShoot = shoot;
 	}
 	vector<snapshot> history;
 	void CalculateSnapshot(char input, int timestamp, int position);

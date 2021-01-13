@@ -94,8 +94,12 @@ void Tank::UpdateInput(int player)
 			sentPack = true;
 		}
 
-		if (Key_Down(DIK_SPACE) && bullet == NULL)
+		if (Key_Down(DIK_SPACE) && bullet == NULL && (player == id || player == id+2))
 		{
+			if (id == 0)
+			{
+				id = id;
+			}
 			D3DXVECTOR2 firingPos = objInfo.GetCenterPos();
 			//firingPos += objInfo.direction * (objInfo.width / 2 - 7);
 			bullet = new Bullet(id, firingPos.x, firingPos.y, curFacing);
@@ -297,25 +301,38 @@ void Tank::UpdateVelocity()
 
 	collisionTime = 1;
 	normalX = normalY = 0;
-
-	if (objInfo.botLeftPosition.x > previousX)
-		curFacing = RIGHT;
-	else if (objInfo.botLeftPosition.x < previousX)
-		curFacing = LEFT;
-	else if (objInfo.botLeftPosition.y > previousY)
-		curFacing = UP;
-	else if (objInfo.botLeftPosition.y < previousY)
-		curFacing = DOWN;
-	previousX = objInfo.botLeftPosition.x;
-	previousY = objInfo.botLeftPosition.y;
 	UpdateAnimation();
 }
 
-void Tank::UsePack(int player_x, int player_y)
+void Tank::UsePack(int player_x, int player_y, int player, bool shoot)
 {
-	if (abs(objInfo.botLeftPosition.x - player_x) > 10 || abs(objInfo.botLeftPosition.y - player_y))
+	if (abs(objInfo.botLeftPosition.x - player_x) > 10 || abs(objInfo.botLeftPosition.y - player_y) > 10 || id != player)
 	{
 		objInfo.botLeftPosition.x = player_x;
 		objInfo.botLeftPosition.y = player_y;
 	}
+	if (id != player)
+	{
+		if (objInfo.botLeftPosition.x > previousX)
+			curFacing = RIGHT;
+		else if (objInfo.botLeftPosition.x < previousX)
+			curFacing = LEFT;
+		else if (objInfo.botLeftPosition.y > previousY)
+			curFacing = UP;
+		else if (objInfo.botLeftPosition.y < previousY)
+			curFacing = DOWN;
+		if (shoot)
+		{
+			bool isCreateBullet = false;
+			if (bullet == NULL)
+			{
+				//isCreateBullet = true;
+				D3DXVECTOR2 firingPos = objInfo.GetCenterPos();
+				//firingPos += objInfo.direction * (objInfo.width / 2 - 7);
+				bullet = new Bullet(id, firingPos.x, firingPos.y, curFacing);
+			}
+		}
+	}
+	previousX = objInfo.botLeftPosition.x;
+	previousY = objInfo.botLeftPosition.y;
 }

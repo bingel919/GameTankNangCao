@@ -52,7 +52,7 @@ public:
 	int SendPack(char command);
 	int ReceivPack();
 	void UpdateVelocity();
-	void UsePack(int player_x, int player_y);
+	void UsePack(int player_x, int player_y, int player, bool shoot);
 private:
 	void UpdateAnimation();
 	void TankCollideDetect(Tank* tanks, int numberOfTanks);

@@ -64,13 +64,13 @@ int ClientSetup()
 
 	server_address.sin_family = AF_INET;
 	server_address.sin_port = htons(PORT);
-	server_address.sin_addr.S_un.S_addr = inet_addr("192.168.0.27");
+	server_address.sin_addr.S_un.S_addr = inet_addr("192.168.0.34");
 
 	__int32 player_x;
 	__int32 player_y;
 	SetSocketBlockingEnabled(sock, false);
 }
-void ReceivePack(Tank &tank1, Tank &tank2)
+void ReceivePack(Tank &tank1, Tank &tank2, int player)
 {
 	const int SOCKET_BUFFER_SIZE = 8000;
 	__int8 buffer[SOCKET_BUFFER_SIZE];
@@ -103,11 +103,16 @@ void ReceivePack(Tank &tank1, Tank &tank2)
 			__int32 player_x[2];
 			__int32 player_y[2];
 
+			bool shoot[2];
+
 			memcpy(&player_x, &buffer[read_index], sizeof(player_x));
 			read_index += sizeof(player_x);
 
 			memcpy(&player_y, &buffer[read_index], sizeof(player_y));
 			read_index += sizeof(player_y);
+
+			memcpy(&shoot, &buffer[read_index], sizeof(shoot));
+			read_index += sizeof(shoot);
 			//auto end = std::chrono::system_clock::now();
 			//std::time_t end_time = std::chrono::system_clock::to_time_t(end);
 			//auto timenow = static_cast<int>(end_time);
@@ -120,8 +125,8 @@ void ReceivePack(Tank &tank1, Tank &tank2)
 			//	tank1.UsePack(player_x, player_y);
 			//}
 			//else
-				tank2.UsePack(player_x[1], player_y[1]);
-				tank1.UsePack(player_x[0], player_y[0]);
+				tank2.UsePack(player_x[1], player_y[1], player, shoot[1]);
+				tank1.UsePack(player_x[0], player_y[0], player, shoot[0]);
 			//}
 
 
@@ -187,7 +192,7 @@ void ServerGame::Game_Run()
 	tank[1].UpdateInput(player);
 
 	Update();
-	ReceivePack(tank[0], tank[1]);
+	ReceivePack(tank[0], tank[1], player);
 	tank[0].Update(&map, tank, numberOfTanks);
 	tank[1].Update(&map, tank, numberOfTanks);
 

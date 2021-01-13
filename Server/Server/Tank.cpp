@@ -86,10 +86,8 @@ Bullet* Tank::UpdateInput()
 		if (Key_Down(DIK_SPACE) && id == 0 ||
 			Key_Down(DIK_LCONTROL) && id == 1 || bShoot)
 		{
-			isCreateBullet = true;
-			D3DXVECTOR2 firingPos = objInfo.GetCenterPos();
-			//firingPos += objInfo.direction * (objInfo.width / 2 - 7);
-			bullet = new Bullet(id, firingPos.x, firingPos.y, curFacing);
+			bShoot = true;
+			Shoot(isCreateBullet);
 		}
 		
 	}
@@ -99,7 +97,7 @@ Bullet* Tank::UpdateInput()
 
 	if (objInfo.velocity != D3DXVECTOR2(0, 0))
 		UpdateAnimation();
-	bShoot = false;
+	//bShoot = false;
 	if (isCreateBullet)
 		return bullet;
 	return NULL;
@@ -134,8 +132,8 @@ void Tank::Render(Camera camera)
 		rect.left = rect.top = 0;
 		spriteSheet.Render(camera, spriteSheetInfo.getRectLocation(curSprite), objInfo, 1);
 	}
-	if (bullet)
-		bullet->Render(camera);
+	/*if (bullet)
+		bullet->Render(camera);*/
 
 }
 
@@ -205,17 +203,16 @@ void Tank::GoRight()
 		UpdateAnimation();
 }
 
-void Tank::Shoot()
+Bullet* Tank::Shoot(bool isCreateBullet)
 {
-	/*bool isCreateBullet = false;
-	if (bullet == NULL)
-	{
-		isCreateBullet = true;
-		D3DXVECTOR2 firingPos = objInfo.GetCenterPos();
-		//firingPos += objInfo.direction * (objInfo.width / 2 - 7);
-		bullet = new Bullet(id, firingPos.x, firingPos.y, curFacing);
-	}*/
+	if (bullet != nullptr)
+		return nullptr;
+	isCreateBullet = true;
+	D3DXVECTOR2 firingPos = objInfo.GetCenterPos();
+	//firingPos += objInfo.direction * (objInfo.width / 2 - 7);
+	bullet = new Bullet(id, firingPos.x, firingPos.y, curFacing);
 	bShoot = true;
+	return bullet;
 }
 
 void Tank::CalculateSnapshot(char input, int timestamp, int position)

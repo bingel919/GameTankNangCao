@@ -33,6 +33,8 @@ protected:
 	vector<Bullet*> bullets;
 	int numberOfTanks;
 	Map map;
+
+	bool SentFrom1;
 public:
 	VClock virtualClock;
 	ServerGame();
@@ -42,6 +44,10 @@ public:
 	void Game_Run();
 	void Game_End();
 	static void SendBrickStatus(int i, int j);
+	int ServerSetUp();
+	void ProcessInput(Tank &tank, _int8 buffer[]);
+	int ServerRun(Tank &tank1, Tank &tank2);
+	int SendBack(Tank tank[], SOCKADDR_IN from1, SOCKADDR_IN from2);
 
 	void Update();
 
