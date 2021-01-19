@@ -279,9 +279,9 @@ void Tank::SaveSnapShot(char input, int timestamp)
 		for (int i = 0; i < history.size()-1; i++)
 		{
 			history[i] = history[i + 1];
-			history.pop_back();
-			history.push_back(snap);
 		}
+		history.pop_back();
+		history.push_back(snap);
 	}
 }
 
@@ -341,6 +341,7 @@ void Tank::UpdateVelocity()
 
 	collisionTime = 1;
 	normalX = normalY = 0;
+	UpdateAnimation();
 }
 void Tank::BulletReset()
 {

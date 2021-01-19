@@ -151,8 +151,8 @@ void ServerGame::ProcessInput(Tank &tank, _int8 buffer[])
 	auto end = std::chrono::system_clock::now();
 	std::time_t end_time = std::chrono::system_clock::to_time_t(end);
 	auto timenow = static_cast<int>(end_time);
-	char debug[50] = "Receive package";
-	OutputDebugString(debug);
+	//char debug[50] = "Receive package";
+	//OutputDebugString(debug);
 	//auto shorttime = timenow % 10000;
 	timeint = timenow - timenow % 10000 + timeint;
 	delay = timenow - timeint;
@@ -175,24 +175,24 @@ void ServerGame::ProcessInput(Tank &tank, _int8 buffer[])
 	{
 	case 'w':
 		tank.GoUp();
-		lagY = tank.GetSpeed()*delay;
+		//lagY = tank.GetSpeed()*delay;
 		break;
 
 	case 'a':
 		tank.GoLeft();
-		lagX = -tank.GetSpeed()*delay;
+		//lagX = -tank.GetSpeed()*delay;
 		//SendBack(tank, from);
 		break;
 
 	case 's':
 		tank.GoDown();
-		lagY = -tank.GetSpeed()*delay;
+		//lagY = -tank.GetSpeed()*delay;
 		//SendBack(tank, from);
 		break;
 
 	case 'd':
 		tank.GoRight();
-		lagX = tank.GetSpeed()*delay;
+		//lagX = tank.GetSpeed()*delay;
 		//SendBack(tank, from);
 		break;
 	case 'q':
@@ -282,9 +282,9 @@ int ServerGame::SendBack(Tank tank[], SOCKADDR_IN from1, SOCKADDR_IN from2)
 	player_y[0] = tank[0].GetY();
 	previousX[0] = player_x[0];
 	previousY[0] = player_y[0];
-
 	player_x[1] = tank[1].GetX();
 	player_y[1] = tank[1].GetY();
+	_RPT1(0, "%d\n", player_x[1]);
 	previousX[1] = player_x[1];
 	previousY[1] = player_y[1];
 
@@ -336,8 +336,6 @@ int ServerGame::SendBack(Tank tank[], SOCKADDR_IN from1, SOCKADDR_IN from2)
 			{
 				int a = 0;
 			}
-			char debug[50] = "Send back package";
-			OutputDebugString(debug);
 			auto err = "a";
 		}
 		if (sendto(sock, buffer2, buffer_length, flags, to2, to_length) == SOCKET_ERROR)
@@ -459,6 +457,7 @@ void ServerGame::Game_Run()
 		bullets.push_back(tmp);
 
 	//socket
+	ServerRun(tank[1], tank[0]);
 	ServerRun(tank[1], tank[0]);
 	ServerRun(tank[1], tank[0]);
 	ServerRun(tank[1], tank[0]);

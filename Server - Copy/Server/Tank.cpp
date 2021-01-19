@@ -306,13 +306,21 @@ void Tank::UpdateVelocity()
 
 void Tank::UsePack(int player_x, int player_y, int player, bool shoot)
 {
-	if (abs(objInfo.botLeftPosition.x - player_x) > 10 || abs(objInfo.botLeftPosition.y - player_y) > 10 || id != player)
+	if (abs(objInfo.botLeftPosition.x - player_x) > 5 || abs(objInfo.botLeftPosition.y - player_y) > 5 || (id != player && id != player-2))
 	{
+		if (id == 1)
+		{
+    			id = id;
+		}
 		objInfo.botLeftPosition.x = player_x;
 		objInfo.botLeftPosition.y = player_y;
 	}
-	if (id != player)
+	if (id != player && id != player -2)
 	{
+		if (id == 0)
+		{
+			id = id;
+		}
 		if (objInfo.botLeftPosition.x > previousX)
 			curFacing = RIGHT;
 		else if (objInfo.botLeftPosition.x < previousX)

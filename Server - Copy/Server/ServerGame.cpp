@@ -1,24 +1,28 @@
 #include "ServerGame.h"
 #include <chrono>
+#include <iostream>
 #include <ctime> 
-
+#include <fstream>
+using namespace std;
 //id's to assign clients for our table
 unsigned int ServerGame::client_id = 0;
 ServerGame* ServerGame::instance = NULL;
-void NaiveSend(int inSocket, const package* inTank)
-{
-	send(inSocket,
-		reinterpret_cast<const char*>(inTank),
-		sizeof(Tank), 0);
-}
-void NaiveRecv(int inSocket, package* outTank)
-{
-	recv(inSocket,
-		reinterpret_cast<char*>(outTank),
-		sizeof(Tank), 0);
-}
 SOCKET sock;
 SOCKADDR_IN server_address;
+void ReadPlayerAndIP(string &IP, int &player)
+{
+	ifstream myfile("configs.txt");
+	string line;
+	if (myfile.is_open())
+	{
+		getline(myfile, line);
+		IP = line;
+		getline(myfile, line);
+		player = std::stoi(line);
+		myfile.close();
+	}
+	myfile.close();
+}
 ServerGame::ServerGame()
 {
 	UINT sleep_granularity_ms = 1;
@@ -40,6 +44,7 @@ bool SetSocketBlockingEnabled(int fd, bool blocking)
 	return (fcntl(fd, F_SETFL, flags) == 0) ? true : false;
 #endif
 }
+int player = 1;
 int ClientSetup()
 {
 	const int PORT = 9999;
@@ -64,7 +69,10 @@ int ClientSetup()
 
 	server_address.sin_family = AF_INET;
 	server_address.sin_port = htons(PORT);
-	server_address.sin_addr.S_un.S_addr = inet_addr("192.168.0.34");
+	string StrIP;
+	ReadPlayerAndIP(StrIP, player);
+	const char* IP = StrIP.c_str();
+	server_address.sin_addr.S_un.S_addr = inet_addr(IP);
 
 	__int32 player_x;
 	__int32 player_y;
@@ -125,6 +133,8 @@ void ReceivePack(Tank &tank1, Tank &tank2, int player)
 			//	tank1.UsePack(player_x, player_y);
 			//}
 			//else
+			_RPT1(0, "%d ; %d \n", player_x[1], tank2.GetX());
+
 				tank2.UsePack(player_x[1], player_y[1], player, shoot[1]);
 				tank1.UsePack(player_x[0], player_y[0], player, shoot[0]);
 			//}
@@ -172,7 +182,6 @@ int ServerGame::Game_Init()
 
 void ServerGame::Game_Run()
 {
-	int player = 1;
 	//reacquire input
 	dikeyboard->Acquire();
 	dimouse->Acquire();
