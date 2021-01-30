@@ -37,7 +37,7 @@ protected:
 	static const string pathToResource;
 
 	FACING curFacing = UP;
-	float speed = 1.1f;
+	float speed = 1.2f;
 	int curSprite = 0;
 	int frameDelay = 4;
 	int startingFrame = UP * 2;
@@ -46,6 +46,9 @@ protected:
 	Tiles spriteSheetInfo;
 	MapElement collisionDetect[3] = { BRICK, STONE, WATER };
 	Bullet* bullet = NULL;
+
+	int previousKey = 0;
+	bool isShoot = false;
 
 	D3DXVECTOR2 respawnPos;
 
@@ -64,10 +67,12 @@ public:
 	__int32 GetX();
 	__int32 GetY();
 	D3DXVECTOR2 GetVelocity();
+	void SetMovingKey(int x);
 	void GoUp();
 	void GoDown();
 	void GoLeft();
 	void GoRight();
+	void Stop();
 	Bullet* Shoot(bool isCreateBullet);
 	int GetID()
 	{
@@ -86,6 +91,8 @@ public:
 		if (bShoot)
 		bShoot = shoot;
 	}
+
+	void IsShoot() { isShoot = true; }
 	vector<snapshot> history;
 	void CalculateSnapshot(char input, int timestamp, int position);
 	void SaveSnapShot(char input, int timestamp);

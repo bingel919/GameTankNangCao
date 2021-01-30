@@ -28,6 +28,7 @@ Tank::Tank(int width, int height, float x, float y, FACING direction, int sprite
 	objInfo.width = width;
 	objInfo.height = height;
 	objType = TankObj;
+	objInfo.velocity = D3DXVECTOR2(0, 0);
 
 	startingFrame = direction * 2;
 	curFacing = direction;
@@ -38,10 +39,9 @@ Tank::~Tank()
 {
 }
 
-
 Bullet* Tank::UpdateInput()
 {
-	objInfo.velocity = D3DXVECTOR2(0, 0);
+
 	FACING prevFace = curFacing;
 	if (Key_Down(DIK_UP) && id == 0 ||
 		Key_Down(DIK_W) && id == 1)
@@ -91,6 +91,14 @@ Bullet* Tank::UpdateInput()
 		}
 		
 	}
+
+	if (isShoot && bullet == nullptr)
+	{
+		Shoot(false);
+		isShoot = false;
+		isCreateBullet = true;
+	}
+
 	if (prevFace != curFacing)
 		countDownFrameDelay = 0;
 
@@ -106,6 +114,27 @@ Bullet* Tank::UpdateInput()
 
 void Tank::Update(Map* mapInfo, Tank* tanks, int numberOfTanks)
 {
+	switch (previousKey)
+	{
+	case 0:
+		Stop();
+		break;
+	case 1:
+		GoUp();
+		break;
+	case 2:
+		GoDown();
+		break;
+	case 3:
+		GoLeft();
+		break;
+	case 4:
+		GoRight();
+		break;
+
+	default:
+		break;
+	}
 	mapInfo->CollisionDetect(this, collisionDetect, 3);
 	TankCollideDetect(tanks, numberOfTanks);
 	
@@ -164,43 +193,62 @@ D3DXVECTOR2 Tank::GetVelocity()
 	return objInfo.velocity;
 }
 
+void Tank::SetMovingKey(int x)
+{
+	previousKey = x;
+}
+
+
+
 void Tank::GoUp()
 {
+	//previousKey = 1;
 	//objInfo.botLeftPosition.y += speed * collisionTime;
 	objInfo.velocity.y = speed;
 	objInfo.direction.y = 1;
 	curFacing = UP;
+	objInfo.velocity.x = 0;
 
 	if (objInfo.velocity != D3DXVECTOR2(0, 0))
 		UpdateAnimation();
 }
 void Tank::GoDown()
 {
+	//previousKey = 2;
 	objInfo.velocity.y = -speed;
 	objInfo.direction.y = -1;
 	curFacing = DOWN;
+	objInfo.velocity.x = 0;
 
 	if (objInfo.velocity != D3DXVECTOR2(0, 0))
 		UpdateAnimation();
 }
 void Tank::GoLeft()
 {
+	//previousKey = 3;
 	//objInfo.botLeftPosition.x -= speed * collisionTime;
 	objInfo.velocity.x = -speed;
 	objInfo.direction.x = -1;
 	curFacing = LEFT;
-
+	objInfo.velocity.y = 0;
 	if (objInfo.velocity != D3DXVECTOR2(0, 0))
 		UpdateAnimation();
 }
 void Tank::GoRight()
 {
+	//previousKey = 4;
 	objInfo.velocity.x = speed;
 	objInfo.direction.x = 1;
 	curFacing = RIGHT;
+	objInfo.velocity.y = 0;
 
 	if (objInfo.velocity != D3DXVECTOR2(0, 0))
 		UpdateAnimation();
+}
+
+void Tank::Stop()
+{
+	objInfo.velocity = D3DXVECTOR2(0, 0);
 }
 
 Bullet* Tank::Shoot(bool isCreateBullet)
@@ -337,6 +385,8 @@ void Tank::UpdateVelocity()
 		objInfo.velocity.x = 0;
 	if (abs(normalY) > 0.0001f)
 		objInfo.velocity.y = 0;
+	/*if (id == 1)
+	_RPT1(0, "%d ; %d \n", objInfo.velocity.x, objInfo.velocity.y);*/
 	objInfo.botLeftPosition += objInfo.velocity *collisionTime;
 
 	collisionTime = 1;

@@ -170,36 +170,52 @@ void ServerGame::ProcessInput(Tank &tank, _int8 buffer[])
 	}
 	tank.SaveSnapShot(client_input, timenow);
 
+	_RPT1(0, "%c\n", client_input);
 	Bullet* temp = nullptr;
 	switch (client_input)
 	{
 	case 'w':
-		tank.GoUp();
-		//lagY = tank.GetSpeed()*delay;
+		//tank.GoUp();
+		tank.SetMovingKey(1);
+		lagY = tank.GetSpeed()*delay;
 		break;
 
 	case 'a':
-		tank.GoLeft();
-		//lagX = -tank.GetSpeed()*delay;
+		//tank.GoLeft();
+		tank.SetMovingKey(3);
+		lagX = -tank.GetSpeed()*delay;
 		//SendBack(tank, from);
 		break;
 
 	case 's':
-		tank.GoDown();
-		//lagY = -tank.GetSpeed()*delay;
+		//tank.GoDown();
+		tank.SetMovingKey(2);
+		lagY = -tank.GetSpeed()*delay;
 		//SendBack(tank, from);
 		break;
 
 	case 'd':
-		tank.GoRight();
-		//lagX = tank.GetSpeed()*delay;
+		//tank.GoRight();
+		tank.SetMovingKey(4);
+		lagX = tank.GetSpeed()*delay;
 		//SendBack(tank, from);
 		break;
 	case 'q':
-		temp = tank.Shoot(false);
-		if (temp != nullptr)
-			bullets.push_back(temp);
+		tank.IsShoot();
 		//SendBack(tank, from);
+		break;
+	case 'A':
+		tank.Stop();
+		break;
+	case 'W':
+		tank.SetMovingKey(0);
+		//tank.Stop();
+		break;
+	case 'S':
+		tank.Stop();
+		break;
+	case 'D':
+		tank.Stop();
 		break;
 	default:
 		printf("unhandled input %c\n", client_input);
@@ -274,16 +290,16 @@ int ServerGame::SendBack(Tank tank[], SOCKADDR_IN from1, SOCKADDR_IN from2)
 	//if (tank.GetX() == previousX[tank.GetID()])
 		//lagX = 0;
 	//if (tank.GetY() == previousY[tank.GetID()])
-		//lagY = 0;
+	//	lagY = 0;
 	__int32 player_x[2];
 	__int32 player_y[2];
 
-	player_x[0] = tank[0].GetX();
-	player_y[0] = tank[0].GetY();
+	player_x[0] = tank[0].GetX() + lagX*2;
+	player_y[0] = tank[0].GetY() + lagY*2;
 	previousX[0] = player_x[0];
 	previousY[0] = player_y[0];
-	player_x[1] = tank[1].GetX();
-	player_y[1] = tank[1].GetY();
+	player_x[1] = tank[1].GetX() + lagX*2;
+	player_y[1] = tank[1].GetY() + lagY*2;
 	_RPT1(0, "%d\n", player_x[1]);
 	previousX[1] = player_x[1];
 	previousY[1] = player_y[1];
@@ -479,7 +495,12 @@ void ServerGame::Game_Run()
 	int i = 0;
 	while (i < bullets.size())
 	{
-		if (bullets[i]->isDestroy)
+		if (bullets[i] == nullptr)
+		{
+			bullets[i] = nullptr;
+			bullets.erase(bullets.begin() + i);
+		}
+		else if (bullets[i]->isDestroy)
 		{
 			delete bullets[i];
 			bullets[i] = nullptr;

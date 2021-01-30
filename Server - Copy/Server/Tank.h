@@ -28,7 +28,7 @@ protected:
 	static const string pathToResource;
 
 	FACING curFacing = UP;
-	float speed = 1.1f;
+	float speed = 1.2f;
 	int curSprite = 0;
 	int frameDelay = 4;
 	int startingFrame = UP * 2;

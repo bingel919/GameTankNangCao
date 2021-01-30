@@ -33,17 +33,19 @@ Tank::Tank(int width, int height, float x, float y, FACING direction, int sprite
 	curFacing = direction;
 	previousX = objInfo.botLeftPosition.x;
 	previousY = objInfo.botLeftPosition.y;
+
 }
 
 
 Tank::~Tank()
 {
 }
-
+int previousKey;
 void Tank::UpdateInput(int player)
 {
-		bool sentPack = false;
 		objInfo.velocity = D3DXVECTOR2(0, 0);
+		bool sentPack = false;
+
 		FACING prevFace = curFacing;
 		if (Key_Down(DIK_UP) && id == 0 ||
 			Key_Down(DIK_W) && id == 1)
@@ -54,7 +56,11 @@ void Tank::UpdateInput(int player)
 			objInfo.direction.y = 1;
 			objInfo.direction.x = 0;
 			curFacing = UP;
-			SendPack('w');
+			if (previousKey != 1)
+			{
+				SendPack('w');
+				previousKey = 1;
+			}
 			sentPack = true;
 		}
 		else if (Key_Down(DIK_DOWN) && id == 0 ||
@@ -66,7 +72,11 @@ void Tank::UpdateInput(int player)
 			objInfo.direction.y = -1;
 			objInfo.direction.x = 0;
 			curFacing = DOWN;
-			SendPack('s');
+			if (previousKey != 2)
+			{
+				SendPack('s');
+				previousKey = 2;
+			}
 			sentPack = true;
 		}
 		else if (Key_Down(DIK_LEFT) && id == 0 ||
@@ -78,7 +88,11 @@ void Tank::UpdateInput(int player)
 			objInfo.direction.x = -1;
 			objInfo.direction.y = 0;
 			curFacing = LEFT;
-			SendPack('a');
+			if (previousKey != 3)
+			{
+				SendPack('a');
+				previousKey = 3;
+			}
 			sentPack = true;
 		}
 		else if (Key_Down(DIK_RIGHT) && id == 0 ||
@@ -90,7 +104,11 @@ void Tank::UpdateInput(int player)
 			objInfo.direction.x = 1;
 			objInfo.direction.y = 0;
 			curFacing = RIGHT;
-			SendPack('d');
+			if (previousKey != 4)
+			{
+				SendPack('d');
+				previousKey = 4;
+			}
 			sentPack = true;
 		}
 
@@ -106,6 +124,63 @@ void Tank::UpdateInput(int player)
 			SendPack('q');
 			sentPack = true;
 		}
+		
+		if (objInfo.velocity.x == 0.0f && objInfo.velocity.y == 0.0f)
+		{
+			if (player == id || player == id + 2)
+			{
+				_RPT1(0, "%f ; %f \n", objInfo.velocity.x, objInfo.velocity.y);
+				_RPT0(0, "Stop \n");
+				SendPack('W');
+				previousKey = 0;
+			}
+		}
+		///////////////////////////////////////////////
+		/*if (Key_Up(DIK_UP) && id == 0 ||
+			Key_Up(DIK_W) && id == 1)
+		{
+			//objInfo.botLeftPosition.y += speed * collisionTime;
+			//if (!rev)
+			SendPack('W');
+			sentPack = true;
+		}
+		else if (Key_Up(DIK_DOWN) && id == 0 ||
+			Key_Up(DIK_S) && id == 1)
+		{
+			//	objInfo.botLeftPosition.y -= speed * collisionTime;
+				//if (!rev)
+			SendPack('S');
+			sentPack = true;
+		}
+		else if (Key_Up(DIK_LEFT) && id == 0 ||
+			Key_Up(DIK_A) && id == 1)
+		{
+			//objInfo.botLeftPosition.x -= speed * collisionTime;
+			//if (!rev)
+			SendPack('A');
+			sentPack = true;
+		}
+		else if (Key_Up(DIK_RIGHT) && id == 0 ||
+			Key_Up(DIK_D) && id == 1)
+		{
+			//	objInfo.botLeftPosition.x += speed * collisionTime;
+				//if (!rev)
+			SendPack('D');
+			sentPack = true;
+		}
+
+		if (Key_Down(DIK_SPACE) && bullet == NULL && (player == id || player == id + 2))
+		{
+			if (id == 0)
+			{
+				id = id;
+			}
+			D3DXVECTOR2 firingPos = objInfo.GetCenterPos();
+			//firingPos += objInfo.direction * (objInfo.width / 2 - 7);
+			bullet = new Bullet(id, firingPos.x, firingPos.y, curFacing);
+			SendPack('q');
+			sentPack = true;
+		}*/
 		if (prevFace != curFacing)
 			countDownFrameDelay = 0;
 
@@ -129,6 +204,7 @@ void Tank::Update(Map* mapInfo, Tank* tanks, int numberOfTanks)
 			bullet = NULL;
 		}
 	}
+
 	ReceivPack();
 }
 
@@ -245,7 +321,7 @@ int Tank::ReceivPack()
 			//if (abs(objInfo.botLeftPosition.x - player_x) >= 20 && abs(objInfo.botLeftPosition.y - player_y) >= 10)
 			//{
 				objInfo.botLeftPosition.x = player_x;
-				objInfo.botLeftPosition.y = player_y;
+				objInfo.botLeftPositsion.y = player_y;
 			//}
 			
 			
@@ -306,7 +382,7 @@ void Tank::UpdateVelocity()
 
 void Tank::UsePack(int player_x, int player_y, int player, bool shoot)
 {
-	if (abs(objInfo.botLeftPosition.x - player_x) > 5 || abs(objInfo.botLeftPosition.y - player_y) > 5 || (id != player && id != player-2))
+	if (abs(objInfo.botLeftPosition.x - player_x) > 10 || abs(objInfo.botLeftPosition.y - player_y) > 10 || (id != player && id != player-2))
 	{
 		if (id == 1)
 		{

@@ -1,0 +1,12 @@
+﻿  Tank.cpp
+  C:\Program Files (x86)\Windows Kits\10\Include\10.0.19041.0\um\dinput.h: DIRECTINPUT_VERSION undefined. Defaulting to version 0x0800
+F:\Documents\Visual Studio 2017\Projects\Client\GameTankNangCao\Server\Server\Tank.cpp(28,18): warning C4244: '=': conversion from 'int' to 'float', possible loss of data
+F:\Documents\Visual Studio 2017\Projects\Client\GameTankNangCao\Server\Server\Tank.cpp(29,19): warning C4244: '=': conversion from 'int' to 'float', possible loss of data
+F:\Documents\Visual Studio 2017\Projects\Client\GameTankNangCao\Server\Server\Tank.cpp(171,79): warning C4244: 'argument': conversion from 'FLOAT' to 'int', possible loss of data
+F:\Documents\Visual Studio 2017\Projects\Client\GameTankNangCao\Server\Server\Tank.cpp(171,52): warning C4244: 'argument': conversion from 'FLOAT' to 'int', possible loss of data
+F:\Documents\Visual Studio 2017\Projects\Client\GameTankNangCao\Server\Server\Tank.cpp(177,33): warning C4244: '=': conversion from 'int' to 'FLOAT', possible loss of data
+F:\Documents\Visual Studio 2017\Projects\Client\GameTankNangCao\Server\Server\Tank.cpp(178,33): warning C4244: '=': conversion from 'int' to 'FLOAT', possible loss of data
+F:\Documents\Visual Studio 2017\Projects\Client\GameTankNangCao\Server\Server\Tank.cpp(183,32): warning C4244: 'return': conversion from 'FLOAT' to 'int', possible loss of data
+F:\Documents\Visual Studio 2017\Projects\Client\GameTankNangCao\Server\Server\Tank.cpp(188,32): warning C4244: 'return': conversion from 'FLOAT' to 'int', possible loss of data
+F:\Documents\Visual Studio 2017\Projects\Client\GameTankNangCao\Server\Server\Tank.cpp(327,21): warning C4018: '<': signed/unsigned mismatch
+  Server.vcxproj -> F:\Documents\Visual Studio 2017\Projects\Client\GameTankNangCao\Server\Debug\Server.exe
